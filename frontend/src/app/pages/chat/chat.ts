@@ -6,6 +6,16 @@ import { ChatService } from '../../services/chat.service';
 import { SocketService } from '../../services/socket.service';
 import { ChatMessage, RcChannel, RcMessage } from '../../models/message.model';
 
+export interface UnifiedMessage {
+  id: string;
+  type: 'user' | 'system';
+  sender: string;
+  text: string;
+  timestamp: string;
+  own: boolean;
+  category?: string;
+}
+
 @Component({
   selector: 'app-chat',
   imports: [FormsModule, DatePipe],
@@ -17,25 +27,54 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   channels = signal<RcChannel[]>([]);
   currentChannel = signal<RcChannel | null>(null);
-  rcMessages = signal<RcMessage[]>([]);
+  private rcMessages = signal<RcMessage[]>([]);
   newMessage = '';
   newChannelName = '';
   showCreateChannel = signal(false);
   showSidebar = signal(true);
 
-  wsMessages = computed(() => this.socketService.messages());
   onlineUsers = computed(() => this.socketService.onlineUsers());
   typingUsers = computed(() =>
     this.socketService.typingUsers()
       .filter(u => u.isTyping && u.username !== this.auth.session()?.username)
   );
-
   currentUsername = computed(() => this.auth.session()?.username || '');
+
+  /**
+   * Fusionne l'historique RC et les messages WS en une liste unique triee par timestamp.
+   */
+  allMessages = computed<UnifiedMessage[]>(() => {
+    const username = this.currentUsername();
+
+    const fromRc: UnifiedMessage[] = this.rcMessages().map(m => ({
+      id: m._id,
+      type: 'user' as const,
+      sender: m.u.username,
+      text: m.msg,
+      timestamp: m.ts,
+      own: m.u.username === username,
+    }));
+
+    const fromWs: UnifiedMessage[] = this.socketService.messages().map((m, i) => ({
+      id: `ws-${i}-${m.TIMESTAMP}`,
+      type: (m.CATEGORY === 'OPEN' || m.CATEGORY === 'CLOSE') ? 'system' as const : 'user' as const,
+      sender: m.SOURCE,
+      text: m.PAYLOAD,
+      timestamp: m.TIMESTAMP,
+      own: m.SOURCE === username,
+      category: m.CATEGORY,
+    }));
+
+    return [...fromRc, ...fromWs].sort((a, b) =>
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+  });
+
   private typingTimeout: any;
   private shouldScroll = false;
 
   constructor(
-    private auth: AuthService,
+    public auth: AuthService,
     private chatService: ChatService,
     private socketService: SocketService,
   ) {}
@@ -49,7 +88,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
-   * Déconnecte le WebSocket à la destruction du composant.
+   * Deconnecte le WebSocket a la destruction du composant.
    */
   ngOnDestroy(): void {
     this.socketService.disconnect();
@@ -76,7 +115,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
-   * Sélectionne un channel et charge son historique.
+   * Selectionne un channel et charge son historique.
    */
   async selectChannel(channel: RcChannel): Promise<void> {
     this.currentChannel.set(channel);
@@ -117,7 +156,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
-   * Gère l'indicateur de frappe.
+   * Gere l'indicateur de frappe.
    */
   onTyping(): void {
     const channel = this.currentChannel();
@@ -132,7 +171,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
-   * Crée un nouveau channel.
+   * Cree un nouveau channel.
    */
   async createChannel(): Promise<void> {
     if (!this.newChannelName.trim()) return;
@@ -145,7 +184,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
-   * Déconnecte l'utilisateur.
+   * Deconnecte l'utilisateur.
    */
   logout(): void {
     this.socketService.disconnect();
@@ -153,7 +192,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
-   * Détecte la touche Entrée pour envoyer un message.
+   * Detecte la touche Entree pour envoyer un message.
    */
   onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {

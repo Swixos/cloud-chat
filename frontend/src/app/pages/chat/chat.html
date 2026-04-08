@@ -98,46 +98,31 @@
 
     <div class="messages-area" #messagesContainer>
       <div class="messages-inner">
-        @for (msg of rcMessages(); track msg._id) {
-          <div class="msg-row" [class.own]="msg.u.username === currentUsername()">
-            @if (msg.u.username !== currentUsername()) {
-              <div class="msg-avatar">{{ msg.u.username.charAt(0).toUpperCase() }}</div>
-            }
-            <div class="msg-bubble">
-              <div class="msg-meta">
-                <span class="msg-sender">{{ msg.u.username }}</span>
-                <span class="msg-timestamp">{{ msg.ts | date:'HH:mm' }}</span>
-              </div>
-              <p class="msg-text">{{ msg.msg }}</p>
-            </div>
-          </div>
-        }
-
-        @for (msg of wsMessages(); track $index) {
-          @if (msg.CATEGORY === 'OPEN' || msg.CATEGORY === 'CLOSE') {
+        @for (msg of allMessages(); track msg.id) {
+          @if (msg.type === 'system') {
             <div class="msg-system">
               <div class="msg-system-line"></div>
               <span class="msg-system-text">
-                @if (msg.CATEGORY === 'OPEN') {
+                @if (msg.category === 'OPEN') {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
                 } @else {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                 }
-                {{ msg.PAYLOAD }}
+                {{ msg.text }}
               </span>
               <div class="msg-system-line"></div>
             </div>
           } @else {
-            <div class="msg-row" [class.own]="msg.SOURCE === currentUsername()">
-              @if (msg.SOURCE !== currentUsername()) {
-                <div class="msg-avatar">{{ msg.SOURCE.charAt(0).toUpperCase() }}</div>
+            <div class="msg-row" [class.own]="msg.own">
+              @if (!msg.own) {
+                <div class="msg-avatar">{{ msg.sender.charAt(0).toUpperCase() }}</div>
               }
               <div class="msg-bubble">
                 <div class="msg-meta">
-                  <span class="msg-sender">{{ msg.SOURCE }}</span>
-                  <span class="msg-timestamp">{{ msg.TIMESTAMP | date:'HH:mm' }}</span>
+                  <span class="msg-sender">{{ msg.sender }}</span>
+                  <span class="msg-timestamp">{{ msg.timestamp | date:'HH:mm' }}</span>
                 </div>
-                <p class="msg-text">{{ msg.PAYLOAD }}</p>
+                <p class="msg-text">{{ msg.text }}</p>
               </div>
             </div>
           }
