@@ -138,10 +138,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
 
     if (data.target === 'COMMON') {
-      this.server.to('common').emit('message', routedMessage);
+      client.to('common').emit('message', routedMessage);
     } else {
-      this.server.to(data.target).emit('message', routedMessage);
-      client.emit('message', routedMessage);
+      client.to(data.target).emit('message', routedMessage);
     }
   }
 
