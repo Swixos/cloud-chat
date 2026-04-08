@@ -103,7 +103,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     const text = this.newMessage.trim();
 
     this.rcMessages.update(msgs => [...msgs, {
-      _id: crypto.randomUUID(),
+      _id: Date.now().toString(36) + Math.random().toString(36).slice(2),
       msg: text,
       u: { _id: this.auth.session()!.userId, username: this.currentUsername() },
       ts: new Date().toISOString(),
