@@ -79,13 +79,22 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Récupère la liste des channels accessibles par l'utilisateur.
+   * Récupère tous les channels publics et auto-join l'utilisateur.
    */
   async getChannels(userId: string, authToken: string): Promise<RcChannel[]> {
-    const res = await this.api.get('/channels.list.joined', {
+    const res = await this.api.get('/channels.list', {
+      params: { count: 100 },
       headers: this.authHeaders(userId, authToken),
     });
-    return res.data.channels;
+    const channels: RcChannel[] = res.data.channels;
+
+    for (const channel of channels) {
+      try {
+        await this.joinChannel(channel._id, userId, authToken);
+      } catch {}
+    }
+
+    return channels;
   }
 
   /**
