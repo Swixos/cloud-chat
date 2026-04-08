@@ -38,7 +38,8 @@ export class LoginComponent {
         await this.auth.login(this.username, this.password);
       }
     } catch (err: any) {
-      this.error.set(err?.error?.message || 'Erreur de connexion');
+      const msg = err?.error?.message || err?.error?.error || err?.message || 'Erreur de connexion';
+      this.error.set(msg);
     } finally {
       this.loading.set(false);
     }

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { RocketchatService, RcUser } from '../rocketchat/rocketchat.service';
 
 @Injectable()
@@ -28,13 +28,21 @@ export class AuthService {
    * Enregistre un nouvel utilisateur via Rocket.Chat.
    */
   async register(username: string, password: string, email: string, name: string): Promise<RcUser & { wsUrl: string; rcUrl: string }> {
-    const user = await this.rocketchatService.register(username, password, email, name);
-    this.sessions.set(user.authToken, user);
-    return {
-      ...user,
-      wsUrl: this.rocketchatService.getWebsocketUrl(),
-      rcUrl: this.rocketchatService.getBaseUrl(),
-    };
+    try {
+      const user = await this.rocketchatService.register(username, password, email, name);
+      this.sessions.set(user.authToken, user);
+      return {
+        ...user,
+        wsUrl: this.rocketchatService.getWebsocketUrl(),
+        rcUrl: this.rocketchatService.getBaseUrl(),
+      };
+    } catch (err: any) {
+      const rcError = err?.response?.data;
+      if (rcError?.error) {
+        throw new BadRequestException(rcError.error, { description: rcError.details?.map((d: any) => d.message).join(', ') });
+      }
+      throw new BadRequestException('Registration failed');
+    }
   }
 
   /**
