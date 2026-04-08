@@ -100,10 +100,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!this.newMessage.trim() || !this.currentChannel()) return;
 
     const channel = this.currentChannel()!;
-    this.socketService.sendMessage(channel.name, this.newMessage.trim(), channel._id);
+    const text = this.newMessage.trim();
+
+    this.rcMessages.update(msgs => [...msgs, {
+      _id: crypto.randomUUID(),
+      msg: text,
+      u: { _id: this.auth.session()!.userId, username: this.currentUsername() },
+      ts: new Date().toISOString(),
+      rid: channel._id,
+    }]);
+
+    this.socketService.sendMessage(channel.name, text, channel._id);
     this.newMessage = '';
     this.shouldScroll = true;
-
     this.socketService.sendTyping(channel.name, false);
   }
 
