@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, ViewChild, ElementRef, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
@@ -22,7 +22,7 @@ export interface UnifiedMessage {
   templateUrl: './chat.html',
   styleUrl: './chat.scss',
 })
-export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
   channels = signal<RcChannel[]>([]);
@@ -71,13 +71,17 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   });
 
   private typingTimeout: any;
-  private shouldScroll = false;
 
   constructor(
     public auth: AuthService,
     private chatService: ChatService,
     private socketService: SocketService,
-  ) {}
+  ) {
+    effect(() => {
+      this.allMessages();
+      setTimeout(() => this.scrollToBottom(), 0);
+    });
+  }
 
   /**
    * Initialise la connexion WebSocket et charge les channels.
@@ -92,13 +96,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
    */
   ngOnDestroy(): void {
     this.socketService.disconnect();
-  }
-
-  ngAfterViewChecked(): void {
-    if (this.shouldScroll) {
-      this.scrollToBottom();
-      this.shouldScroll = false;
-    }
   }
 
   /**
@@ -126,7 +123,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     try {
       const messages = await this.chatService.getMessages(channel._id);
       this.rcMessages.set(messages);
-      this.shouldScroll = true;
+
     } catch {
       this.rcMessages.set([]);
     }
@@ -151,7 +148,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.socketService.sendMessage(channel.name, text, channel._id);
     this.newMessage = '';
-    this.shouldScroll = true;
     this.socketService.sendTyping(channel.name, false);
   }
 
