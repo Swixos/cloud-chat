@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { AuthService } from './auth.service';
 import { ChatMessage } from '../models/message.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SocketService {
@@ -20,7 +21,7 @@ export class SocketService {
     const session = this.auth.session();
     if (!session) return;
 
-    this.socket = io('http://localhost:3000', {
+    this.socket = io(environment.wsUrl, {
       auth: { token: session.authToken, userId: session.userId },
     });
 

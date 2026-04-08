@@ -27,7 +27,7 @@ interface ChatMessage {
 }
 
 @WebSocketGateway({
-  cors: { origin: 'http://localhost:4200', credentials: true },
+  cors: { origin: true, credentials: true },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
