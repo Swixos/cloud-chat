@@ -1,120 +1,170 @@
 <div class="chat-layout">
-  <!-- Sidebar -->
   <aside class="sidebar" [class.open]="showSidebar()">
-    <div class="sidebar-header">
-      <h2>Cloud Chat</h2>
-      <button class="btn-icon" (click)="showSidebar.set(false)">&#10005;</button>
+    <div class="sidebar-brand">
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span>Cloud Chat</span>
+      <button class="sidebar-close" (click)="showSidebar.set(false)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
     </div>
 
-    <div class="user-info">
-      <div class="user-avatar">{{ currentUsername().charAt(0).toUpperCase() }}</div>
-      <span class="user-name">{{ currentUsername() }}</span>
-      <button class="btn-logout" (click)="logout()">Déconnexion</button>
-    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">
+          <span>Channels</span>
+          <button class="nav-action" (click)="showCreateChannel.set(!showCreateChannel())" [class.active]="showCreateChannel()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
 
-    <div class="sidebar-section">
-      <div class="section-header">
-        <h3>Channels</h3>
-        <button class="btn-icon small" (click)="showCreateChannel.set(!showCreateChannel())">+</button>
+        @if (showCreateChannel()) {
+          <div class="create-channel-form">
+            <div class="input-with-action">
+              <input
+                type="text"
+                [(ngModel)]="newChannelName"
+                placeholder="nouveau-channel"
+                (keydown.enter)="createChannel()"
+              />
+              <button (click)="createChannel()" [disabled]="!newChannelName.trim()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+          </div>
+        }
+
+        <ul class="nav-list">
+          @for (channel of channels(); track channel._id) {
+            <li
+              [class.active]="currentChannel()?._id === channel._id"
+              (click)="selectChannel(channel)"
+            >
+              <span class="nav-icon">#</span>
+              <span class="nav-label">{{ channel.name }}</span>
+            </li>
+          }
+        </ul>
       </div>
 
-      @if (showCreateChannel()) {
-        <div class="create-channel">
-          <input
-            type="text"
-            [(ngModel)]="newChannelName"
-            placeholder="Nom du channel"
-            (keydown.enter)="createChannel()"
-          />
-          <button class="btn-small" (click)="createChannel()">Créer</button>
+      <div class="nav-section">
+        <div class="nav-section-title">
+          <span>En ligne</span>
+          <span class="badge">{{ onlineUsers().length }}</span>
         </div>
-      }
-
-      <ul class="channel-list">
-        @for (channel of channels(); track channel._id) {
-          <li
-            [class.active]="currentChannel()?._id === channel._id"
-            (click)="selectChannel(channel)"
-          >
-            <span class="channel-hash">#</span>
-            <span class="channel-name">{{ channel.name }}</span>
-          </li>
-        }
-      </ul>
+        <ul class="nav-list users">
+          @for (user of onlineUsers(); track user) {
+            <li>
+              <span class="presence-indicator"></span>
+              <span class="nav-label">{{ user }}</span>
+            </li>
+          }
+        </ul>
+      </div>
     </div>
 
-    <div class="sidebar-section">
-      <h3>En ligne ({{ onlineUsers().length }})</h3>
-      <ul class="user-list">
-        @for (user of onlineUsers(); track user) {
-          <li>
-            <span class="online-dot"></span>
-            {{ user }}
-          </li>
-        }
-      </ul>
+    <div class="sidebar-footer">
+      <div class="current-user">
+        <div class="avatar">{{ currentUsername().charAt(0).toUpperCase() }}</div>
+        <div class="user-details">
+          <span class="username">{{ currentUsername() }}</span>
+          <span class="status">En ligne</span>
+        </div>
+        <button class="logout-btn" (click)="logout()" title="Se deconnecter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        </button>
+      </div>
     </div>
   </aside>
 
-  <!-- Main Chat Area -->
   <main class="chat-main">
-    <div class="chat-header">
-      <button class="btn-icon menu-toggle" (click)="showSidebar.set(true)">&#9776;</button>
+    <div class="chat-topbar">
+      <button class="topbar-menu" (click)="showSidebar.set(true)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
       @if (currentChannel()) {
-        <h2># {{ currentChannel()!.name }}</h2>
+        <div class="topbar-info">
+          <h2><span class="hash">#</span>{{ currentChannel()!.name }}</h2>
+        </div>
       }
+      <div class="topbar-actions">
+        <span class="member-count">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          {{ onlineUsers().length }}
+        </span>
+      </div>
     </div>
 
     <div class="messages-area" #messagesContainer>
-      <!-- Historique Rocket.Chat -->
-      @for (msg of rcMessages(); track msg._id) {
-        <div class="message" [class.own]="msg.u.username === currentUsername()">
-          <div class="message-header">
-            <span class="message-author">{{ msg.u.username }}</span>
-            <span class="message-time">{{ msg.ts | date:'HH:mm' }}</span>
-          </div>
-          <div class="message-body">{{ msg.msg }}</div>
-        </div>
-      }
-
-      <!-- Messages WebSocket temps réel -->
-      @for (msg of wsMessages(); track $index) {
-        @if (msg.CATEGORY === 'OPEN' || msg.CATEGORY === 'CLOSE') {
-          <div class="system-message">
-            <span>{{ msg.PAYLOAD }}</span>
-            <span class="message-time">{{ msg.TIMESTAMP | date:'HH:mm' }}</span>
-          </div>
-        } @else {
-          <div class="message" [class.own]="msg.SOURCE === currentUsername()">
-            <div class="message-header">
-              <span class="message-author">{{ msg.SOURCE }}</span>
-              <span class="message-time">{{ msg.TIMESTAMP | date:'HH:mm' }}</span>
+      <div class="messages-inner">
+        @for (msg of rcMessages(); track msg._id) {
+          <div class="msg-row" [class.own]="msg.u.username === currentUsername()">
+            @if (msg.u.username !== currentUsername()) {
+              <div class="msg-avatar">{{ msg.u.username.charAt(0).toUpperCase() }}</div>
+            }
+            <div class="msg-bubble">
+              <div class="msg-meta">
+                <span class="msg-sender">{{ msg.u.username }}</span>
+                <span class="msg-timestamp">{{ msg.ts | date:'HH:mm' }}</span>
+              </div>
+              <p class="msg-text">{{ msg.msg }}</p>
             </div>
-            <div class="message-body">{{ msg.PAYLOAD }}</div>
           </div>
         }
-      }
+
+        @for (msg of wsMessages(); track $index) {
+          @if (msg.CATEGORY === 'OPEN' || msg.CATEGORY === 'CLOSE') {
+            <div class="msg-system">
+              <div class="msg-system-line"></div>
+              <span class="msg-system-text">
+                @if (msg.CATEGORY === 'OPEN') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                }
+                {{ msg.PAYLOAD }}
+              </span>
+              <div class="msg-system-line"></div>
+            </div>
+          } @else {
+            <div class="msg-row" [class.own]="msg.SOURCE === currentUsername()">
+              @if (msg.SOURCE !== currentUsername()) {
+                <div class="msg-avatar">{{ msg.SOURCE.charAt(0).toUpperCase() }}</div>
+              }
+              <div class="msg-bubble">
+                <div class="msg-meta">
+                  <span class="msg-sender">{{ msg.SOURCE }}</span>
+                  <span class="msg-timestamp">{{ msg.TIMESTAMP | date:'HH:mm' }}</span>
+                </div>
+                <p class="msg-text">{{ msg.PAYLOAD }}</p>
+              </div>
+            </div>
+          }
+        }
+      </div>
     </div>
 
-    <!-- Typing indicator -->
     @if (typingUsers().length > 0) {
-      <div class="typing-indicator">
-        {{ typingUsers().map(u => u.username).join(', ') }} est en train d'écrire...
+      <div class="typing-bar">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+        <span>{{ typingUsers().map(u => u.username).join(', ') }} est en train d'ecrire...</span>
       </div>
     }
 
-    <!-- Input area -->
-    <div class="chat-input">
-      <textarea
-        [(ngModel)]="newMessage"
-        (input)="onTyping()"
-        (keydown)="onKeydown($event)"
-        placeholder="Écrire un message..."
-        rows="1"
-      ></textarea>
-      <button class="btn-send" (click)="sendMessage()" [disabled]="!newMessage.trim()">
-        Envoyer
-      </button>
+    <div class="chat-composer">
+      <div class="composer-inner">
+        <textarea
+          [(ngModel)]="newMessage"
+          (input)="onTyping()"
+          (keydown)="onKeydown($event)"
+          placeholder="Envoyer un message dans #{{ currentChannel()?.name || 'general' }}"
+          rows="1"
+        ></textarea>
+        <button class="send-btn" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
     </div>
   </main>
 </div>
