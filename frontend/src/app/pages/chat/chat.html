@@ -1,0 +1,120 @@
+<div class="chat-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.open]="showSidebar()">
+    <div class="sidebar-header">
+      <h2>Cloud Chat</h2>
+      <button class="btn-icon" (click)="showSidebar.set(false)">&#10005;</button>
+    </div>
+
+    <div class="user-info">
+      <div class="user-avatar">{{ currentUsername().charAt(0).toUpperCase() }}</div>
+      <span class="user-name">{{ currentUsername() }}</span>
+      <button class="btn-logout" (click)="logout()">Déconnexion</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-header">
+        <h3>Channels</h3>
+        <button class="btn-icon small" (click)="showCreateChannel.set(!showCreateChannel())">+</button>
+      </div>
+
+      @if (showCreateChannel()) {
+        <div class="create-channel">
+          <input
+            type="text"
+            [(ngModel)]="newChannelName"
+            placeholder="Nom du channel"
+            (keydown.enter)="createChannel()"
+          />
+          <button class="btn-small" (click)="createChannel()">Créer</button>
+        </div>
+      }
+
+      <ul class="channel-list">
+        @for (channel of channels(); track channel._id) {
+          <li
+            [class.active]="currentChannel()?._id === channel._id"
+            (click)="selectChannel(channel)"
+          >
+            <span class="channel-hash">#</span>
+            <span class="channel-name">{{ channel.name }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>En ligne ({{ onlineUsers().length }})</h3>
+      <ul class="user-list">
+        @for (user of onlineUsers(); track user) {
+          <li>
+            <span class="online-dot"></span>
+            {{ user }}
+          </li>
+        }
+      </ul>
+    </div>
+  </aside>
+
+  <!-- Main Chat Area -->
+  <main class="chat-main">
+    <div class="chat-header">
+      <button class="btn-icon menu-toggle" (click)="showSidebar.set(true)">&#9776;</button>
+      @if (currentChannel()) {
+        <h2># {{ currentChannel()!.name }}</h2>
+      }
+    </div>
+
+    <div class="messages-area" #messagesContainer>
+      <!-- Historique Rocket.Chat -->
+      @for (msg of rcMessages(); track msg._id) {
+        <div class="message" [class.own]="msg.u.username === currentUsername()">
+          <div class="message-header">
+            <span class="message-author">{{ msg.u.username }}</span>
+            <span class="message-time">{{ msg.ts | date:'HH:mm' }}</span>
+          </div>
+          <div class="message-body">{{ msg.msg }}</div>
+        </div>
+      }
+
+      <!-- Messages WebSocket temps réel -->
+      @for (msg of wsMessages(); track $index) {
+        @if (msg.CATEGORY === 'OPEN' || msg.CATEGORY === 'CLOSE') {
+          <div class="system-message">
+            <span>{{ msg.PAYLOAD }}</span>
+            <span class="message-time">{{ msg.TIMESTAMP | date:'HH:mm' }}</span>
+          </div>
+        } @else {
+          <div class="message" [class.own]="msg.SOURCE === currentUsername()">
+            <div class="message-header">
+              <span class="message-author">{{ msg.SOURCE }}</span>
+              <span class="message-time">{{ msg.TIMESTAMP | date:'HH:mm' }}</span>
+            </div>
+            <div class="message-body">{{ msg.PAYLOAD }}</div>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Typing indicator -->
+    @if (typingUsers().length > 0) {
+      <div class="typing-indicator">
+        {{ typingUsers().map(u => u.username).join(', ') }} est en train d'écrire...
+      </div>
+    }
+
+    <!-- Input area -->
+    <div class="chat-input">
+      <textarea
+        [(ngModel)]="newMessage"
+        (input)="onTyping()"
+        (keydown)="onKeydown($event)"
+        placeholder="Écrire un message..."
+        rows="1"
+      ></textarea>
+      <button class="btn-send" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+        Envoyer
+      </button>
+    </div>
+  </main>
+</div>
