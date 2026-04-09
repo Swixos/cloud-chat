@@ -1,10 +1,7 @@
 <div class="chat-layout">
   <aside class="sidebar" [class.open]="showSidebar()">
-    <div class="sidebar-brand">
-      <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
-      <span>Cloud Chat</span>
+    <div class="sidebar-header">
+      <span class="server-name">Cloud Chat</span>
       <button class="sidebar-close" (click)="showSidebar.set(false)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
@@ -21,38 +18,38 @@
         Messages
       </button>
       <button [class.active]="activeTab() === 'groups'" (click)="activeTab.set('groups')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" overflow="visible"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Groupes
       </button>
     </div>
 
-    <div class="sidebar-nav">
+    <div class="sidebar-channels">
       <!-- Channels tab -->
       @if (activeTab() === 'channels') {
-        <div class="nav-section">
-          <div class="nav-section-title">
-            <span>Channels</span>
-            <button class="nav-action" (click)="showCreateChannel.set(!showCreateChannel())" [class.active]="showCreateChannel()">
+        <div class="channel-category">
+          <div class="category-header">
+            <span>Channels textuels</span>
+            <button class="add-btn" (click)="showCreateChannel.set(!showCreateChannel())" [class.active]="showCreateChannel()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
             </button>
           </div>
 
           @if (showCreateChannel()) {
-            <div class="create-channel-form">
-              <div class="input-with-action">
+            <div class="create-form">
+              <div class="create-input-row">
                 <input type="text" [(ngModel)]="newChannelName" placeholder="nouveau-channel" (keydown.enter)="createChannel()" />
-                <button (click)="createChannel()" [disabled]="!newChannelName.trim()">
+                <button class="confirm-btn" (click)="createChannel()" [disabled]="!newChannelName.trim()">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                 </button>
               </div>
             </div>
           }
 
-          <ul class="nav-list">
+          <ul class="channel-list">
             @for (channel of channels(); track channel._id) {
               <li [class.active]="activeRoom()?._id === channel._id" (click)="selectRoom({ _id: channel._id, name: channel.name, type: 'channel' })">
-                <span class="nav-icon">#</span>
-                <span class="nav-label">{{ channel.name }}</span>
+                <span class="channel-hash">#</span>
+                <span class="channel-name">{{ channel.name }}</span>
               </li>
             }
           </ul>
@@ -61,37 +58,36 @@
 
       <!-- DMs tab -->
       @if (activeTab() === 'dms') {
-        <div class="nav-section">
-          <div class="nav-section-title">
+        <div class="channel-category">
+          <div class="category-header">
             <span>Messages privés</span>
-            <button class="nav-action" (click)="showNewDm.set(!showNewDm())" [class.active]="showNewDm()">
+            <button class="add-btn" (click)="showNewDm.set(!showNewDm())" [class.active]="showNewDm()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
             </button>
           </div>
 
           @if (showNewDm()) {
             <div class="user-picker">
-              <p class="picker-label">Choisir un utilisateur :</p>
-              <ul class="nav-list">
+              <ul class="channel-list">
                 @for (user of availableUsers(); track user._id) {
                   <li (click)="openDm(user.username)">
-                    <div class="mini-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
-                    <span class="nav-label">{{ user.username }}</span>
+                    <div class="user-avatar small">{{ user.username.charAt(0).toUpperCase() }}</div>
+                    <span class="channel-name">{{ user.username }}</span>
                   </li>
                 }
               </ul>
             </div>
           }
 
-          <ul class="nav-list">
+          <ul class="channel-list">
             @for (dm of dms(); track dm._id) {
               <li [class.active]="activeRoom()?._id === dm._id" (click)="selectRoom({ _id: dm._id, name: dm.name, type: 'dm', usernames: dm.usernames })">
-                <div class="mini-avatar">{{ dmDisplayName(dm).charAt(0).toUpperCase() }}</div>
-                <span class="nav-label">{{ dmDisplayName(dm) }}</span>
+                <div class="user-avatar small">{{ dmDisplayName(dm).charAt(0).toUpperCase() }}</div>
+                <span class="channel-name">{{ dmDisplayName(dm) }}</span>
               </li>
             }
             @if (dms().length === 0 && !showNewDm()) {
-              <li class="empty-hint">Aucun message privé</li>
+              <li class="empty-state">Aucun message privé</li>
             }
           </ul>
         </div>
@@ -99,27 +95,27 @@
 
       <!-- Groups tab -->
       @if (activeTab() === 'groups') {
-        <div class="nav-section">
-          <div class="nav-section-title">
+        <div class="channel-category">
+          <div class="category-header">
             <span>Groupes privés</span>
-            <button class="nav-action" (click)="showCreateGroup.set(!showCreateGroup())" [class.active]="showCreateGroup()">
+            <button class="add-btn" (click)="showCreateGroup.set(!showCreateGroup())" [class.active]="showCreateGroup()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
             </button>
           </div>
 
           @if (showCreateGroup()) {
-            <div class="create-group-form">
-              <div class="input-with-action">
+            <div class="create-form">
+              <div class="create-input-row">
                 <input type="text" [(ngModel)]="newGroupName" placeholder="nom-du-groupe" />
               </div>
-              <p class="picker-label">Sélectionner les membres</p>
-              <ul class="nav-list selectable">
+              <p class="picker-hint">Sélectionner les membres</p>
+              <ul class="channel-list selectable">
                 @for (user of availableUsers(); track user._id) {
                   <li [class.selected]="selectedGroupMembers().includes(user.username)" (click)="toggleGroupMember(user.username)">
-                    <div class="mini-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
-                    <span class="nav-label">{{ user.username }}</span>
+                    <div class="user-avatar small">{{ user.username.charAt(0).toUpperCase() }}</div>
+                    <span class="channel-name">{{ user.username }}</span>
                     @if (selectedGroupMembers().includes(user.username)) {
-                      <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                      <svg class="check-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                     }
                   </li>
                 }
@@ -130,101 +126,98 @@
             </div>
           }
 
-          <ul class="nav-list">
+          <ul class="channel-list">
             @for (group of groups(); track group._id) {
               <li [class.active]="activeRoom()?._id === group._id" (click)="selectRoom({ _id: group._id, name: group.name, type: 'group' })">
-                <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
-                <span class="nav-label">{{ group.name }}</span>
+                <svg class="channel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" overflow="visible"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
+                <span class="channel-name">{{ group.name }}</span>
               </li>
             }
             @if (groups().length === 0 && !showCreateGroup()) {
-              <li class="empty-hint">Aucun groupe</li>
+              <li class="empty-state">Aucun groupe</li>
             }
           </ul>
         </div>
       }
 
       <!-- Online users -->
-      <div class="nav-section">
-        <div class="nav-section-title">
-          <span>En ligne</span>
-          <span class="badge">{{ onlineUsers().length }}</span>
+      <div class="channel-category">
+        <div class="category-header">
+          <span>En ligne — {{ onlineUsers().length }}</span>
         </div>
-        <ul class="nav-list users">
+        <ul class="channel-list online-list">
           @for (user of onlineUsers(); track user) {
             <li>
-              <span class="presence-indicator"></span>
-              <span class="nav-label">{{ user }}</span>
+              <div class="user-avatar small online">{{ user.charAt(0).toUpperCase() }}</div>
+              <span class="channel-name">{{ user }}</span>
             </li>
           }
         </ul>
       </div>
     </div>
 
-    <div class="sidebar-footer">
-      <div class="current-user">
-        <div class="avatar">{{ currentUsername().charAt(0).toUpperCase() }}</div>
-        <div class="user-details">
-          <span class="username">{{ currentUsername() }}</span>
-          <span class="status">En ligne</span>
-        </div>
-        <button class="logout-btn" (click)="logout()" title="Se déconnecter">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-        </button>
+    <div class="user-panel">
+      <div class="user-avatar current">{{ currentUsername().charAt(0).toUpperCase() }}</div>
+      <div class="user-info">
+        <span class="user-tag">{{ currentUsername() }}</span>
+        <span class="user-status">En ligne</span>
       </div>
+      <button class="icon-btn" (click)="logout()" title="Se déconnecter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
     </div>
   </aside>
 
   <main class="chat-main">
-    <div class="chat-topbar">
-      <button class="topbar-menu" (click)="showSidebar.set(true)">
+    <div class="chat-header">
+      <button class="mobile-menu" (click)="showSidebar.set(true)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
       </button>
       @if (activeRoom()) {
-        <div class="topbar-info">
-          <h2><span class="hash">{{ activeRoomPrefix() }}</span>{{ activeRoomDisplay() }}</h2>
+        <div class="header-channel">
+          <span class="header-hash">{{ activeRoomPrefix() }}</span>
+          <span class="header-name">{{ activeRoomDisplay() }}</span>
           @if (activeRoom()!.type === 'dm') {
-            <span class="room-type-badge">DM</span>
+            <span class="header-badge">DM</span>
           } @else if (activeRoom()!.type === 'group') {
-            <span class="room-type-badge">Groupe</span>
+            <span class="header-badge">Groupe</span>
           }
         </div>
+        <div class="header-divider"></div>
       }
-      <div class="topbar-actions">
-        <span class="member-count">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          {{ onlineUsers().length }}
-        </span>
+      <div class="header-right">
+        <div class="member-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" overflow="visible"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>{{ onlineUsers().length }}</span>
+        </div>
       </div>
     </div>
 
     <div class="messages-area" #messagesContainer>
-      <div class="messages-inner">
+      <div class="messages-scroller">
         @for (msg of allMessages(); track msg.id) {
           @if (msg.type === 'system') {
-            <div class="msg-system">
-              <div class="msg-system-line"></div>
-              <span class="msg-system-text">
+            <div class="system-msg">
+              <div class="system-line"></div>
+              <span class="system-content">
                 @if (msg.category === 'OPEN') {
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                  <svg viewBox="0 0 18 18" fill="none" stroke="#23a55a" stroke-width="2"><path d="M9 1v16M1 9h16"/></svg>
                 } @else {
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                  <svg viewBox="0 0 18 18" fill="none" stroke="#f23f42" stroke-width="2"><path d="M1 9h16"/></svg>
                 }
                 {{ msg.text }}
               </span>
-              <div class="msg-system-line"></div>
+              <div class="system-line"></div>
             </div>
           } @else {
-            <div class="msg-row" [class.own]="msg.own">
-              @if (!msg.own) {
-                <div class="msg-avatar">{{ msg.sender.charAt(0).toUpperCase() }}</div>
-              }
-              <div class="msg-bubble">
-                <div class="msg-meta">
-                  <span class="msg-sender">{{ msg.sender }}</span>
-                  <span class="msg-timestamp">{{ msg.timestamp | date:'HH:mm' }}</span>
+            <div class="message">
+              <div class="msg-avatar">{{ msg.sender.charAt(0).toUpperCase() }}</div>
+              <div class="msg-content">
+                <div class="msg-header">
+                  <span class="msg-author" [class.self]="msg.own">{{ msg.sender }}</span>
+                  <span class="msg-time">{{ msg.timestamp | date:'dd/MM/yyyy HH:mm' }}</span>
                 </div>
-                <p class="msg-text" [innerHTML]="msg.text | linkify"></p>
+                <div class="msg-body" [innerHTML]="msg.text | linkify"></div>
               </div>
             </div>
           }
@@ -233,23 +226,23 @@
     </div>
 
     @if (typingUsers().length > 0) {
-      <div class="typing-bar">
+      <div class="typing-indicator">
         <div class="typing-dots"><span></span><span></span><span></span></div>
-        <span>{{ typingUsers().map(u => u.username).join(', ') }} est en train d'écrire...</span>
+        <span class="typing-text"><strong>{{ typingUsers().map(u => u.username).join(', ') }}</strong> est en train d'écrire...</span>
       </div>
     }
 
-    <div class="chat-composer">
-      <div class="composer-inner">
+    <div class="chat-input-wrapper">
+      <div class="chat-input-box">
         <textarea
           [(ngModel)]="newMessage"
           (input)="onTyping()"
           (keydown)="onKeydown($event)"
-          placeholder="Envoyer un message dans {{ activeRoomPrefix() }}{{ activeRoomDisplay() || 'general' }}"
+          placeholder="Envoyer un message dans {{ activeRoomPrefix() }}{{ activeRoomDisplay() || 'général' }}"
           rows="1"
         ></textarea>
         <button class="send-btn" (click)="sendMessage()" [disabled]="!newMessage.trim()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
     </div>
