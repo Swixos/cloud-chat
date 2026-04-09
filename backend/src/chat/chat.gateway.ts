@@ -178,6 +178,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(data.target).emit('userTyping', {
       username: user.username,
       isTyping: data.isTyping,
+      target: data.target,
     });
   }
 
