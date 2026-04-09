@@ -140,20 +140,19 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Envoie un message privé (DM) à un utilisateur.
+   * Ouvre ou cree une conversation DM avec un utilisateur.
    */
-  async sendDirectMessage(targetUsername: string, text: string, userId: string, authToken: string): Promise<RcMessage> {
-    const res = await this.api.post('/chat.postMessage', {
-      channel: `@${targetUsername}`,
-      text,
+  async createDirectMessage(targetUsername: string, userId: string, authToken: string): Promise<{ rid: string }> {
+    const res = await this.api.post('/dm.create', {
+      username: targetUsername,
     }, {
       headers: this.authHeaders(userId, authToken),
     });
-    return res.data.message;
+    return { rid: res.data.room._id || res.data.room.rid };
   }
 
   /**
-   * Récupère les DMs (direct messages) de l'utilisateur.
+   * Recupere les DMs (direct messages) de l'utilisateur.
    */
   async getDirectMessages(userId: string, authToken: string): Promise<RcChannel[]> {
     const res = await this.api.get('/dm.list', {
@@ -163,7 +162,7 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Récupère l'historique d'un DM.
+   * Recupere l'historique d'un DM.
    */
   async getDmHistory(roomId: string, userId: string, authToken: string, count = 50): Promise<RcMessage[]> {
     const res = await this.api.get('/dm.history', {
@@ -171,6 +170,63 @@ export class RocketchatService implements OnModuleInit {
       headers: this.authHeaders(userId, authToken),
     });
     return res.data.messages.reverse();
+  }
+
+  /**
+   * Envoie un message dans un DM ou groupe (utilise le meme endpoint que les channels).
+   */
+  async sendDmMessage(roomId: string, text: string, userId: string, authToken: string): Promise<RcMessage> {
+    const res = await this.api.post('/chat.sendMessage', {
+      message: { rid: roomId, msg: text },
+    }, {
+      headers: this.authHeaders(userId, authToken),
+    });
+    return res.data.message;
+  }
+
+  /**
+   * Cree un groupe prive dans Rocket.Chat.
+   */
+  async createGroup(name: string, members: string[], userId: string, authToken: string): Promise<RcChannel> {
+    const res = await this.api.post('/groups.create', {
+      name,
+      members,
+    }, {
+      headers: this.authHeaders(userId, authToken),
+    });
+    return res.data.group;
+  }
+
+  /**
+   * Recupere les groupes prives de l'utilisateur.
+   */
+  async getGroups(userId: string, authToken: string): Promise<RcChannel[]> {
+    const res = await this.api.get('/groups.list', {
+      headers: this.authHeaders(userId, authToken),
+    });
+    return res.data.groups;
+  }
+
+  /**
+   * Recupere l'historique d'un groupe prive.
+   */
+  async getGroupHistory(roomId: string, userId: string, authToken: string, count = 50): Promise<RcMessage[]> {
+    const res = await this.api.get('/groups.history', {
+      params: { roomId, count },
+      headers: this.authHeaders(userId, authToken),
+    });
+    return res.data.messages.reverse();
+  }
+
+  /**
+   * Recupere la liste de tous les utilisateurs enregistres.
+   */
+  async getUsers(userId: string, authToken: string): Promise<{ _id: string; username: string; name: string }[]> {
+    const res = await this.api.get('/users.list', {
+      params: { count: 200 },
+      headers: this.authHeaders(userId, authToken),
+    });
+    return res.data.users;
   }
 
   /**

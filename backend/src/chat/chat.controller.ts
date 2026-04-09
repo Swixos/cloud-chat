@@ -75,25 +75,72 @@ export class ChatController {
   }
 
   /**
-   * Envoie un DM à un utilisateur.
+   * Ouvre ou cree un DM avec un utilisateur.
    */
   @Post('dm')
-  async sendDirectMessage(
-    @Body() body: { targetUsername: string; message: string },
+  async createDm(
+    @Body() body: { targetUsername: string },
     @Headers('x-auth-token') authToken: string,
     @Headers('x-user-id') userId: string,
   ) {
     this.validateHeaders(authToken, userId);
-    return this.rocketchatService.sendDirectMessage(
-      body.targetUsername,
-      body.message,
-      userId,
-      authToken,
-    );
+    return this.rocketchatService.createDirectMessage(body.targetUsername, userId, authToken);
   }
 
   /**
-   * Récupère les informations de l'utilisateur connecté.
+   * Cree un groupe prive.
+   */
+  @Post('groups')
+  async createGroup(
+    @Body() body: { name: string; members: string[] },
+    @Headers('x-auth-token') authToken: string,
+    @Headers('x-user-id') userId: string,
+  ) {
+    this.validateHeaders(authToken, userId);
+    return this.rocketchatService.createGroup(body.name, body.members, userId, authToken);
+  }
+
+  /**
+   * Recupere les groupes prives.
+   */
+  @Get('groups')
+  async getGroups(
+    @Headers('x-auth-token') authToken: string,
+    @Headers('x-user-id') userId: string,
+  ) {
+    this.validateHeaders(authToken, userId);
+    return this.rocketchatService.getGroups(userId, authToken);
+  }
+
+  /**
+   * Recupere l'historique d'un groupe prive.
+   */
+  @Get('groups/history')
+  async getGroupHistory(
+    @Query('roomId') roomId: string,
+    @Headers('x-auth-token') authToken: string,
+    @Headers('x-user-id') userId: string,
+    @Query('count') count?: string,
+  ) {
+    this.validateHeaders(authToken, userId);
+    return this.rocketchatService.getGroupHistory(roomId, userId, authToken, count ? +count : 50);
+  }
+
+  /**
+   * Recupere la liste des utilisateurs enregistres.
+   */
+  @Get('users')
+  async getUsers(
+    @Headers('x-auth-token') authToken: string,
+    @Headers('x-user-id') userId: string,
+  ) {
+    this.validateHeaders(authToken, userId);
+    const users = await this.rocketchatService.getUsers(userId, authToken);
+    return users.filter(u => u.username !== 'rocket.cat');
+  }
+
+  /**
+   * Recupere les informations de l'utilisateur connecte.
    */
   @Get('me')
   async getMe(
