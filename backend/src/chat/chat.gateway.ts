@@ -182,6 +182,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /**
+   * Notifie des utilisateurs qu'une nouvelle conversation a été créée.
+   */
+  notifyNewConversation(usernames: string[], type: 'dm' | 'group') {
+    for (const username of usernames) {
+      this.server.to(username).emit('newConversation', { type });
+    }
+  }
+
+  /**
    * Envoie la liste des utilisateurs connectés à tous les clients.
    */
   private broadcastUserList() {

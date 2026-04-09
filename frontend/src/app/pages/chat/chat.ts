@@ -131,6 +131,14 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.allMessages();
       setTimeout(() => this.scrollToBottom(), 0);
     });
+
+    effect(() => {
+      const event = this.socketService.newConversation();
+      if (!event) return;
+      if (event.type === 'dm') this.loadDms();
+      if (event.type === 'group') this.loadGroups();
+      this.socketService.newConversation.set(null);
+    });
   }
 
   /**

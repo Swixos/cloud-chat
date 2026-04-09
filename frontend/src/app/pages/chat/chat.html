@@ -63,7 +63,7 @@
       @if (activeTab() === 'dms') {
         <div class="nav-section">
           <div class="nav-section-title">
-            <span>Messages prives</span>
+            <span>Messages privés</span>
             <button class="nav-action" (click)="showNewDm.set(!showNewDm())" [class.active]="showNewDm()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
             </button>
@@ -71,7 +71,7 @@
 
           @if (showNewDm()) {
             <div class="user-picker">
-              <p class="picker-label">Choisir un utilisateur</p>
+              <p class="picker-label">Choisir un utilisateur :</p>
               <ul class="nav-list">
                 @for (user of availableUsers(); track user._id) {
                   <li (click)="openDm(user.username)">
@@ -91,7 +91,7 @@
               </li>
             }
             @if (dms().length === 0 && !showNewDm()) {
-              <li class="empty-hint">Aucun message prive</li>
+              <li class="empty-hint">Aucun message privé</li>
             }
           </ul>
         </div>
@@ -101,7 +101,7 @@
       @if (activeTab() === 'groups') {
         <div class="nav-section">
           <div class="nav-section-title">
-            <span>Groupes prives</span>
+            <span>Groupes privés</span>
             <button class="nav-action" (click)="showCreateGroup.set(!showCreateGroup())" [class.active]="showCreateGroup()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
             </button>
@@ -112,7 +112,7 @@
               <div class="input-with-action">
                 <input type="text" [(ngModel)]="newGroupName" placeholder="nom-du-groupe" />
               </div>
-              <p class="picker-label">Selectionner les membres</p>
+              <p class="picker-label">Sélectionner les membres</p>
               <ul class="nav-list selectable">
                 @for (user of availableUsers(); track user._id) {
                   <li [class.selected]="selectedGroupMembers().includes(user.username)" (click)="toggleGroupMember(user.username)">
@@ -125,7 +125,7 @@
                 }
               </ul>
               <button class="create-btn" (click)="createGroup()" [disabled]="!newGroupName.trim() || selectedGroupMembers().length === 0">
-                Creer le groupe ({{ selectedGroupMembers().length }} membre{{ selectedGroupMembers().length > 1 ? 's' : '' }})
+                Créer le groupe ({{ selectedGroupMembers().length }} membre{{ selectedGroupMembers().length > 1 ? 's' : '' }})
               </button>
             </div>
           }
@@ -168,7 +168,7 @@
           <span class="username">{{ currentUsername() }}</span>
           <span class="status">En ligne</span>
         </div>
-        <button class="logout-btn" (click)="logout()" title="Se deconnecter">
+        <button class="logout-btn" (click)="logout()" title="Se déconnecter">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
         </button>
       </div>
@@ -235,7 +235,7 @@
     @if (typingUsers().length > 0) {
       <div class="typing-bar">
         <div class="typing-dots"><span></span><span></span><span></span></div>
-        <span>{{ typingUsers().map(u => u.username).join(', ') }} est en train d'ecrire...</span>
+        <span>{{ typingUsers().map(u => u.username).join(', ') }} est en train d'écrire...</span>
       </div>
     }
 

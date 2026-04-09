@@ -1,12 +1,14 @@
-import { Controller, Get, Post, Body, Query, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Headers, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { RocketchatService } from '../rocketchat/rocketchat.service';
 import { AuthService } from '../auth/auth.service';
+import { ChatGateway } from './chat.gateway';
 
 @Controller('chat')
 export class ChatController {
   constructor(
     private rocketchatService: RocketchatService,
     private authService: AuthService,
+    private chatGateway: ChatGateway,
   ) {}
 
   /**
@@ -84,7 +86,9 @@ export class ChatController {
     @Headers('x-user-id') userId: string,
   ) {
     this.validateHeaders(authToken, userId);
-    return this.rocketchatService.createDirectMessage(body.targetUsername, userId, authToken);
+    const result = await this.rocketchatService.createDirectMessage(body.targetUsername, userId, authToken);
+    this.chatGateway.notifyNewConversation([body.targetUsername], 'dm');
+    return result;
   }
 
   /**
@@ -97,7 +101,14 @@ export class ChatController {
     @Headers('x-user-id') userId: string,
   ) {
     this.validateHeaders(authToken, userId);
-    return this.rocketchatService.createGroup(body.name, body.members, userId, authToken);
+    try {
+      const group = await this.rocketchatService.createGroup(body.name, body.members, userId, authToken);
+      this.chatGateway.notifyNewConversation(body.members, 'group');
+      return group;
+    } catch (err: any) {
+      const rcError = err?.response?.data?.error || 'Erreur lors de la création du groupe';
+      throw new BadRequestException(rcError);
+    }
   }
 
   /**
