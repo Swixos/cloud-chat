@@ -104,7 +104,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     const room = this.activeRoom();
     const fromWs: UnifiedMessage[] = this.socketService.messages()
       .filter(m => {
-        if (m.CATEGORY === 'OPEN' || m.CATEGORY === 'CLOSE') return m.TARGET === 'COMMON';
+        if (m.CATEGORY === 'OPEN' || m.CATEGORY === 'CLOSE') {
+          return room?.type === 'channel' && room?.name === 'general';
+        }
         return m.TARGET === room?.name;
       })
       .map((m, i) => ({
