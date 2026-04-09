@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import { SocketService } from '../../services/socket.service';
 import { ChatMessage, RcChannel, RcMessage } from '../../models/message.model';
+import { LinkifyPipe } from '../../pipes/linkify.pipe';
 
 export interface UnifiedMessage {
   id: string;
@@ -27,7 +28,7 @@ export interface ActiveRoom {
 
 @Component({
   selector: 'app-chat',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, LinkifyPipe],
   templateUrl: './chat.html',
   styleUrl: './chat.scss',
 })
