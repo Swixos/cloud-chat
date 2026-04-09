@@ -619,11 +619,11 @@ $radius-xl: 20px;
     color: $text-primary;
 
     a {
-      color: $accent-light;
+      color: #5eb5ff;
       text-decoration: underline;
       text-underline-offset: 2px;
 
-      &:hover { color: #fff; }
+      &:hover { color: #8fcfff; }
     }
   }
 }
