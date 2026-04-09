@@ -312,8 +312,10 @@ export class ChatComponent implements OnInit, OnDestroy {
   /**
    * Envoie un message dans la room active.
    */
+  maxMessageLength = 2000;
+
   sendMessage(): void {
-    if (!this.newMessage.trim() || !this.activeRoom()) return;
+    if (!this.newMessage.trim() || !this.activeRoom() || this.newMessage.length > this.maxMessageLength) return;
 
     const room = this.activeRoom()!;
     const text = this.newMessage.trim();

@@ -823,6 +823,22 @@ $transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     &:focus { outline: none; }
   }
 
+  &.over-limit {
+    border-color: rgba($red, 0.3);
+  }
+
+  .char-counter {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: $text-muted;
+    white-space: nowrap;
+    align-self: center;
+    transition: color $transition-fast;
+
+    &.warn { color: #f59e0b; }
+    &.error { color: $red; }
+  }
+
   .send-btn {
     width: 36px;
     height: 36px;
