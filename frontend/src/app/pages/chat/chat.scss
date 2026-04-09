@@ -106,7 +106,7 @@ $radius-xl: 20px;
     cursor: pointer;
     transition: all 0.15s;
 
-    svg { width: 14px; height: 14px; }
+    svg { width: 14px; height: 14px; overflow: visible; }
 
     &:hover { color: $text-secondary; background: $bg-hover; }
 
