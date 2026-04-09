@@ -9,7 +9,7 @@ import { LinkifyPipe } from '../../pipes/linkify.pipe';
 
 export interface UnifiedMessage {
   id: string;
-  type: 'user' | 'system';
+  type: 'user' | 'system' | 'date-separator';
   sender: string;
   text: string;
   timestamp: string;
@@ -117,9 +117,30 @@ export class ChatComponent implements OnInit, OnDestroy {
         category: m.CATEGORY,
       }));
 
-    return [...fromRc, ...fromWs].sort((a, b) =>
+    const sorted = [...fromRc, ...fromWs].sort((a, b) =>
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
+
+    const result: UnifiedMessage[] = [];
+    let lastDateKey = '';
+
+    for (const msg of sorted) {
+      const dateKey = new Date(msg.timestamp).toLocaleDateString('fr-FR');
+      if (dateKey !== lastDateKey) {
+        result.push({
+          id: `sep-${dateKey}`,
+          type: 'date-separator',
+          sender: '',
+          text: this.formatDateLabel(new Date(msg.timestamp)),
+          timestamp: msg.timestamp,
+          own: false,
+        });
+        lastDateKey = dateKey;
+      }
+      result.push(msg);
+    }
+
+    return result;
   });
 
   /**
@@ -340,6 +361,19 @@ export class ChatComponent implements OnInit, OnDestroy {
       event.preventDefault();
       this.sendMessage();
     }
+  }
+
+  private formatDateLabel(date: Date): string {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diff = today.getTime() - target.getTime();
+    const days = Math.floor(diff / 86400000);
+
+    if (days === 0) return "Aujourd'hui";
+    if (days === 1) return 'Hier';
+    if (days < 7) return date.toLocaleDateString('fr-FR', { weekday: 'long' });
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   private scrollToBottom(): void {
