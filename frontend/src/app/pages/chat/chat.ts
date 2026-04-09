@@ -51,6 +51,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   showCreateGroup = signal(false);
   showNewDm = signal(false);
   showSidebar = signal(true);
+  loadingRoom = signal(false);
   activeTab = signal<'channels' | 'dms' | 'groups'>('channels');
 
   onlineUsers = computed(() => this.socketService.onlineUsers());
@@ -211,6 +212,8 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.activeRoom.set(room);
     this.socketService.clearMessages();
     this.socketService.joinRoom(room._id, room.name);
+    this.loadingRoom.set(true);
+    this.rcMessages.set([]);
 
     try {
       let messages: RcMessage[];
@@ -224,6 +227,8 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.rcMessages.set(messages);
     } catch {
       this.rcMessages.set([]);
+    } finally {
+      this.loadingRoom.set(false);
     }
   }
 
