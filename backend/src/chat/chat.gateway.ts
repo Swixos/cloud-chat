@@ -185,9 +185,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   /**
    * Notifie des utilisateurs qu'une nouvelle conversation a été créée.
    */
-  notifyNewConversation(usernames: string[], type: 'dm' | 'group') {
-    for (const username of usernames) {
-      this.server.to(username).emit('newConversation', { type });
+  notifyNewConversation(usernames: string[], type: 'dm' | 'group' | 'channel') {
+    if (type === 'channel') {
+      this.server.to('common').emit('newConversation', { type });
+    } else {
+      for (const username of usernames) {
+        this.server.to(username).emit('newConversation', { type });
+      }
     }
   }
 

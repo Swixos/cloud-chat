@@ -165,6 +165,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     effect(() => {
       const event = this.socketService.newConversation();
       if (!event) return;
+      if (event.type === 'channel') this.loadChannels();
       if (event.type === 'dm') this.loadDms();
       if (event.type === 'group') this.loadGroups();
       this.socketService.newConversation.set(null);
