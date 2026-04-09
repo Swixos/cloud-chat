@@ -105,7 +105,7 @@ export class RocketchatService implements OnModuleInit {
       params: { roomId, count },
       headers: this.authHeaders(userId, authToken),
     });
-    return res.data.messages.reverse();
+    return res.data.messages.filter((m: any) => !m.t).reverse();
   }
 
   /**
@@ -169,7 +169,7 @@ export class RocketchatService implements OnModuleInit {
       params: { roomId, count },
       headers: this.authHeaders(userId, authToken),
     });
-    return res.data.messages.reverse();
+    return res.data.messages.filter((m: any) => !m.t).reverse();
   }
 
   /**
@@ -216,7 +216,7 @@ export class RocketchatService implements OnModuleInit {
       params: { roomId, count },
       headers: this.authHeaders(userId, authToken),
     });
-    return res.data.messages.reverse();
+    return res.data.messages.filter((m: any) => !m.t).reverse();
   }
 
   /**
