@@ -832,7 +832,7 @@ $transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
 .chat-input-box {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
   background: $bg-surface;
   border: 1px solid $border-light;
