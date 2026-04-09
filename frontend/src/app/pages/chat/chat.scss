@@ -283,6 +283,7 @@ $radius-xl: 20px;
     height: 14px;
     color: $text-muted;
     flex-shrink: 0;
+    overflow: visible;
   }
 
   &.selectable li {
@@ -529,7 +530,7 @@ $radius-xl: 20px;
     padding: 5px 10px;
     border-radius: 8px;
 
-    svg { width: 14px; height: 14px; }
+    svg { width: 14px; height: 14px; overflow: visible; }
   }
 }
 
