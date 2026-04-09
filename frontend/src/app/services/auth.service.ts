@@ -16,7 +16,9 @@ export class AuthService {
   constructor(private http: HttpClient, private router: Router) {}
 
   /**
-   * Connecte l'utilisateur via le backend NestJS / Rocket.Chat.
+   * Logs in the user via the NestJS / Rocket.Chat backend.
+   * @param username - Username
+   * @param password - Password
    */
   async login(username: string, password: string): Promise<void> {
     const session = await this.http
@@ -29,7 +31,11 @@ export class AuthService {
   }
 
   /**
-   * Enregistre un nouvel utilisateur.
+   * Registers a new user then logs them in automatically.
+   * @param username - Desired username
+   * @param password - Chosen password
+   * @param email - Email address
+   * @param name - Full name
    */
   async register(username: string, password: string, email: string, name: string): Promise<void> {
     const session = await this.http
@@ -42,7 +48,7 @@ export class AuthService {
   }
 
   /**
-   * Déconnecte l'utilisateur.
+   * Logs out the user, removes the local session, and redirects to /login.
    */
   logout(): void {
     const session = this.sessionSignal();
@@ -54,11 +60,19 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  /**
+   * Persists the user session in localStorage.
+   * @param session - Session to save
+   */
   private setSession(session: UserSession): void {
     localStorage.setItem('chat_session', JSON.stringify(session));
     this.sessionSignal.set(session);
   }
 
+  /**
+   * Loads the user session from localStorage.
+   * @returns The session or `null` if absent
+   */
   private loadSession(): UserSession | null {
     const data = localStorage.getItem('chat_session');
     return data ? JSON.parse(data) : null;

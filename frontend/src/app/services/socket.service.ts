@@ -16,7 +16,8 @@ export class SocketService {
   constructor(private auth: AuthService) {}
 
   /**
-   * Établit la connexion WebSocket avec le serveur NestJS.
+   * Establishes the WebSocket connection with the NestJS server.
+   * Configures listeners for messages, user list, and typing indicators.
    */
   connect(): void {
     const session = this.auth.session();
@@ -52,35 +53,42 @@ export class SocketService {
   }
 
   /**
-   * Envoie un message via WebSocket.
+   * Sends a message via WebSocket.
+   * @param target - Message recipient (room name or username)
+   * @param message - Message content
+   * @param roomId - Optional Rocket.Chat room ID
    */
   sendMessage(target: string, message: string, roomId?: string): void {
     this.socket?.emit('sendMessage', { target, message, roomId });
   }
 
   /**
-   * Rejoint un room spécifique.
+   * Joins a specific WebSocket room.
+   * @param roomId - Room ID
+   * @param roomName - Room name
    */
   joinRoom(roomId: string, roomName: string): void {
     this.socket?.emit('joinRoom', { roomId, roomName });
   }
 
   /**
-   * Émet un indicateur de frappe.
+   * Emits a typing indicator to the server.
+   * @param target - Target room name
+   * @param isTyping - `true` if the user is typing, `false` otherwise
    */
   sendTyping(target: string, isTyping: boolean): void {
     this.socket?.emit('typing', { target, isTyping });
   }
 
   /**
-   * Vide les messages stockés.
+   * Clears the locally stored message list.
    */
   clearMessages(): void {
     this.messages.set([]);
   }
 
   /**
-   * Déconnecte le WebSocket.
+   * Disconnects the WebSocket and resets the local state.
    */
   disconnect(): void {
     this.socket?.disconnect();

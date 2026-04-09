@@ -6,6 +6,7 @@ import { ChatService } from '../../services/chat.service';
 import { SocketService } from '../../services/socket.service';
 import { ChatMessage, RcChannel, RcMessage } from '../../models/message.model';
 import { LinkifyPipe } from '../../pipes/linkify.pipe';
+import { EmojiPickerComponent } from '../../components/emoji-picker/emoji-picker';
 
 export interface UnifiedMessage {
   id: string;
@@ -28,7 +29,7 @@ export interface ActiveRoom {
 
 @Component({
   selector: 'app-chat',
-  imports: [FormsModule, DatePipe, LinkifyPipe],
+  imports: [FormsModule, DatePipe, LinkifyPipe, EmojiPickerComponent],
   templateUrl: './chat.html',
   styleUrl: './chat.scss',
 })
@@ -53,6 +54,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   showSidebar = signal(true);
   loadingRoom = signal(false);
   activeTab = signal<'channels' | 'dms' | 'groups'>('channels');
+  maxRoomNameLength = 50;
 
   onlineUsers = computed(() => this.socketService.onlineUsers());
   typingUsers = computed(() => {
@@ -63,7 +65,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   currentUsername = computed(() => this.auth.session()?.username || '');
 
   /**
-   * Retourne le nom d'affichage de la room active.
+   * Display name of the active room (other user for DMs, name otherwise).
    */
   activeRoomDisplay = computed(() => {
     const room = this.activeRoom();
@@ -76,7 +78,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   });
 
   /**
-   * Retourne le prefixe de la room active.
+   * Visual prefix of the active room (`#` for channels).
    */
   activeRoomPrefix = computed(() => {
     const room = this.activeRoom();
@@ -87,7 +89,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   });
 
   /**
-   * Fusionne l'historique RC et les messages WS en une liste unique triee par timestamp.
+   * Unified message list (RC history + WebSocket) sorted chronologically,
+   * with date separators inserted between days.
    */
   allMessages = computed<UnifiedMessage[]>(() => {
     const username = this.currentUsername();
@@ -144,11 +147,37 @@ export class ChatComponent implements OnInit, OnDestroy {
   });
 
   /**
-   * Filtre les utilisateurs pour le DM (exclut soi-meme).
+   * List of available users for DMs (excludes the current user).
    */
   availableUsers = computed(() =>
     this.allUsers().filter(u => u.username !== this.currentUsername())
   );
+
+  /**
+   * Checks if the entered channel name already exists (case-insensitive).
+   * @returns Error message or `null` if valid
+   */
+  channelNameError(): string | null {
+    const name = this.newChannelName.trim().toLowerCase();
+    if (!name) return null;
+    if (this.channels().some(c => c.name.toLowerCase() === name)) {
+      return 'Un channel avec ce nom existe déjà';
+    }
+    return null;
+  }
+
+  /**
+   * Checks if the entered group name already exists (case-insensitive).
+   * @returns Error message or `null` if valid
+   */
+  groupNameError(): string | null {
+    const name = this.newGroupName.trim().toLowerCase();
+    if (!name) return null;
+    if (this.groups().some(g => g.name.toLowerCase() === name)) {
+      return 'Un groupe avec ce nom existe déjà';
+    }
+    return null;
+  }
 
   private typingTimeout: any;
 
@@ -173,7 +202,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Initialise la connexion WebSocket et charge les donnees.
+   * Initializes the WebSocket connection and loads all data.
    */
   ngOnInit(): void {
     this.socketService.connect();
@@ -185,7 +214,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Charge channels, DMs, groupes et utilisateurs.
+   * Loads channels, DMs, groups, and users in parallel.
    */
   async loadAll(): Promise<void> {
     await Promise.all([
@@ -196,6 +225,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     ]);
   }
 
+  /**
+   * Loads the channel list and selects the first one if no room is active.
+   */
   async loadChannels(): Promise<void> {
     try {
       const channels = await this.chatService.getChannels();
@@ -206,6 +238,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     } catch {}
   }
 
+  /**
+   * Loads the DM conversation list.
+   */
   async loadDms(): Promise<void> {
     try {
       const dms = await this.chatService.getDirectMessages();
@@ -213,6 +248,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     } catch {}
   }
 
+  /**
+   * Loads the private group list.
+   */
   async loadGroups(): Promise<void> {
     try {
       const groups = await this.chatService.getGroups();
@@ -220,6 +258,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     } catch {}
   }
 
+  /**
+   * Loads the full user list.
+   */
   async loadUsers(): Promise<void> {
     try {
       const users = await this.chatService.getUsers();
@@ -228,7 +269,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Selectionne une room et charge son historique.
+   * Selects a room, joins the WebSocket channel, and loads the message history.
+   * @param room - Room to select
    */
   async selectRoom(room: ActiveRoom): Promise<void> {
     this.activeRoom.set(room);
@@ -255,7 +297,9 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Retourne le nom d'affichage d'un DM (l'autre utilisateur).
+   * Returns the display name of a DM (the other user in the chat).
+   * @param dm - DM channel
+   * @returns The other user's name or the room name
    */
   dmDisplayName(dm: RcChannel): string {
     if (dm.usernames) {
@@ -266,7 +310,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Ouvre un DM avec un utilisateur.
+   * Opens or creates a DM conversation with a user.
+   * @param username - Recipient username
    */
   async openDm(username: string): Promise<void> {
     try {
@@ -284,10 +329,10 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Cree un groupe prive.
+   * Creates a private group with the selected members.
    */
   async createGroup(): Promise<void> {
-    if (!this.newGroupName.trim() || this.selectedGroupMembers().length === 0) return;
+    if (!this.newGroupName.trim() || this.selectedGroupMembers().length === 0 || this.groupNameError()) return;
     try {
       const group = await this.chatService.createGroup(this.newGroupName.trim(), this.selectedGroupMembers());
       this.newGroupName = '';
@@ -300,7 +345,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Toggle un membre dans la selection pour la creation de groupe.
+   * Adds or removes a member from the group creation selection.
+   * @param username - Username to add/remove
    */
   toggleGroupMember(username: string): void {
     this.selectedGroupMembers.update(members =>
@@ -311,7 +357,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Envoie un message dans la room active.
+   * Sends the current message in the active room via WebSocket and Rocket.Chat.
    */
   maxMessageLength = 2000;
 
@@ -334,6 +380,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.socketService.sendTyping(room.name, false);
   }
 
+  /**
+   * Emits a typing indicator to the server with an automatic stop delay.
+   */
   onTyping(): void {
     const room = this.activeRoom();
     if (!room) return;
@@ -344,8 +393,11 @@ export class ChatComponent implements OnInit, OnDestroy {
     }, 2000);
   }
 
+  /**
+   * Creates a new public channel.
+   */
   async createChannel(): Promise<void> {
-    if (!this.newChannelName.trim()) return;
+    if (!this.newChannelName.trim() || this.channelNameError()) return;
     try {
       await this.chatService.createChannel(this.newChannelName.trim());
       this.newChannelName = '';
@@ -354,11 +406,26 @@ export class ChatComponent implements OnInit, OnDestroy {
     } catch {}
   }
 
+  /**
+   * Disconnects the WebSocket and redirects to the login page.
+   */
   logout(): void {
     this.socketService.disconnect();
     this.auth.logout();
   }
 
+  /**
+   * Inserts an emoji into the message being composed.
+   * @param emoji - Emoji character to insert
+   */
+  insertEmoji(emoji: string): void {
+    this.newMessage += emoji;
+  }
+
+  /**
+   * Handles sending the message via Enter (without Shift).
+   * @param event - Keyboard event
+   */
   onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -366,6 +433,11 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Formats a relative date label (Today, Yesterday, weekday, full date).
+   * @param date - Date to format
+   * @returns Date label
+   */
   private formatDateLabel(date: Date): string {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -379,6 +451,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
+  /**
+   * Scrolls the message area to the bottom.
+   */
   private scrollToBottom(): void {
     try {
       const el = this.messagesContainer?.nativeElement;

@@ -1,0 +1,56 @@
+<div class="emoji-picker-wrapper">
+  <button class="emoji-trigger" (click)="toggle()" [class.active]="isOpen()" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+      <line x1="9" y1="9" x2="9.01" y2="9"/>
+      <line x1="15" y1="9" x2="15.01" y2="9"/>
+    </svg>
+  </button>
+
+  @if (isOpen()) {
+    <div class="emoji-panel">
+      <div class="emoji-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" [(ngModel)]="search" placeholder="Rechercher un emoji..." autofocus />
+      </div>
+
+      <div class="emoji-categories-bar">
+        @for (cat of categories; track cat.name; let i = $index) {
+          <button
+            [class.active]="activeCategory() === i && !search.trim()"
+            (click)="scrollToCategory(i); search = ''"
+            type="button"
+            [title]="cat.name"
+          >{{ cat.icon }}</button>
+        }
+      </div>
+
+      <div class="emoji-body">
+        @if (search.trim()) {
+          <div class="emoji-grid">
+            @for (emoji of filteredEmojis; track emoji) {
+              <button class="emoji-item" (click)="selectEmoji(emoji)" type="button">{{ emoji }}</button>
+            }
+            @if (filteredEmojis.length === 0) {
+              <div class="emoji-no-result">Aucun emoji trouvé</div>
+            }
+          </div>
+        } @else {
+          @for (cat of categories; track cat.name; let i = $index) {
+            @if (activeCategory() === i) {
+              <div class="emoji-section">
+                <div class="emoji-section-title">{{ cat.name }}</div>
+                <div class="emoji-grid">
+                  @for (emoji of cat.emojis; track emoji) {
+                    <button class="emoji-item" (click)="selectEmoji(emoji)" type="button">{{ emoji }}</button>
+                  }
+                </div>
+              </div>
+            }
+          }
+        }
+      </div>
+    </div>
+  }
+</div>

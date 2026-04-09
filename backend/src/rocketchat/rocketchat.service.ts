@@ -35,6 +35,9 @@ export class RocketchatService implements OnModuleInit {
     });
   }
 
+  /**
+   * Checks connectivity with Rocket.Chat on module startup.
+   */
   async onModuleInit() {
     try {
       const res = await this.api.get('/info');
@@ -45,7 +48,10 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Authentifie un utilisateur via Rocket.Chat et retourne ses credentials.
+   * Authenticates a user against the Rocket.Chat API.
+   * @param username - Username
+   * @param password - Password
+   * @returns The authenticated user credentials
    */
   async login(username: string, password: string): Promise<RcUser> {
     const res = await this.api.post('/login', { user: username, password });
@@ -57,7 +63,12 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Enregistre un nouvel utilisateur dans Rocket.Chat.
+   * Registers a new user in Rocket.Chat then authenticates them.
+   * @param username - Desired username
+   * @param password - Chosen password
+   * @param email - Email address
+   * @param name - Full name
+   * @returns The created user credentials
    */
   async register(username: string, password: string, email: string, name: string): Promise<RcUser> {
     await this.api.post('/users.register', {
@@ -70,7 +81,9 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Déconnecte un utilisateur de Rocket.Chat.
+   * Logs out a user from the Rocket.Chat API.
+   * @param userId - User ID
+   * @param authToken - Authentication token
    */
   async logout(userId: string, authToken: string): Promise<void> {
     await this.api.post('/logout', {}, {
@@ -79,7 +92,10 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Récupère tous les channels publics et auto-join l'utilisateur.
+   * Retrieves the list of public channels and auto-joins the user to each one.
+   * @param userId - User ID
+   * @param authToken - Authentication token
+   * @returns List of public channels
    */
   async getChannels(userId: string, authToken: string): Promise<RcChannel[]> {
     const res = await this.api.get('/channels.list', {
@@ -98,7 +114,12 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Récupère l'historique des messages d'un channel.
+   * Retrieves the message history of a channel.
+   * @param roomId - Channel ID
+   * @param userId - User ID
+   * @param authToken - Authentication token
+   * @param count - Maximum number of messages to retrieve
+   * @returns List of messages sorted chronologically
    */
   async getMessages(roomId: string, userId: string, authToken: string, count = 50): Promise<RcMessage[]> {
     const res = await this.api.get('/channels.history', {
@@ -109,7 +130,12 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Envoie un message dans un channel Rocket.Chat.
+   * Sends a message in a Rocket.Chat channel.
+   * @param roomId - Target channel ID
+   * @param text - Message content
+   * @param userId - Sender ID
+   * @param authToken - Authentication token
+   * @returns The sent message
    */
   async sendMessage(roomId: string, text: string, userId: string, authToken: string): Promise<RcMessage> {
     const res = await this.api.post('/chat.sendMessage', {
@@ -121,7 +147,11 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Crée un channel dans Rocket.Chat.
+   * Creates a public channel in Rocket.Chat.
+   * @param name - Channel name to create
+   * @param userId - Creator user ID
+   * @param authToken - Authentication token
+   * @returns The created channel
    */
   async createChannel(name: string, userId: string, authToken: string): Promise<RcChannel> {
     const res = await this.api.post('/channels.create', { name }, {
@@ -131,7 +161,10 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Rejoint un channel existant dans Rocket.Chat.
+   * Joins an existing channel in Rocket.Chat.
+   * @param roomId - Channel ID to join
+   * @param userId - User ID
+   * @param authToken - Authentication token
    */
   async joinChannel(roomId: string, userId: string, authToken: string): Promise<void> {
     await this.api.post('/channels.join', { roomId }, {
@@ -140,7 +173,11 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Ouvre ou cree une conversation DM avec un utilisateur.
+   * Opens or creates a DM conversation with a target user.
+   * @param targetUsername - Recipient username
+   * @param userId - Initiating user ID
+   * @param authToken - Authentication token
+   * @returns The created DM room ID
    */
   async createDirectMessage(targetUsername: string, userId: string, authToken: string): Promise<{ rid: string }> {
     const res = await this.api.post('/dm.create', {
@@ -152,7 +189,10 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Recupere les DMs (direct messages) de l'utilisateur.
+   * Retrieves the user's DM conversation list.
+   * @param userId - User ID
+   * @param authToken - Authentication token
+   * @returns List of DM conversations
    */
   async getDirectMessages(userId: string, authToken: string): Promise<RcChannel[]> {
     const res = await this.api.get('/dm.list', {
@@ -162,7 +202,12 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Recupere l'historique d'un DM.
+   * Retrieves the message history of a DM conversation.
+   * @param roomId - DM room ID
+   * @param userId - User ID
+   * @param authToken - Authentication token
+   * @param count - Maximum number of messages to retrieve
+   * @returns List of messages sorted chronologically
    */
   async getDmHistory(roomId: string, userId: string, authToken: string, count = 50): Promise<RcMessage[]> {
     const res = await this.api.get('/dm.history', {
@@ -173,7 +218,12 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Envoie un message dans un DM ou groupe (utilise le meme endpoint que les channels).
+   * Sends a message in a DM or group via the Rocket.Chat API.
+   * @param roomId - Target room ID
+   * @param text - Message content
+   * @param userId - Sender ID
+   * @param authToken - Authentication token
+   * @returns The sent message
    */
   async sendDmMessage(roomId: string, text: string, userId: string, authToken: string): Promise<RcMessage> {
     const res = await this.api.post('/chat.sendMessage', {
@@ -185,7 +235,12 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Cree un groupe prive dans Rocket.Chat.
+   * Creates a private group in Rocket.Chat.
+   * @param name - Group name (will be sanitized: lowercase, spaces replaced with hyphens)
+   * @param members - List of usernames to add to the group
+   * @param userId - Creator user ID
+   * @param authToken - Authentication token
+   * @returns The created group
    */
   async createGroup(name: string, members: string[], userId: string, authToken: string): Promise<RcChannel> {
     const sanitizedName = name.trim().replace(/\s+/g, '-').toLowerCase();
@@ -199,7 +254,10 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Recupere les groupes prives de l'utilisateur.
+   * Retrieves the user's private groups.
+   * @param userId - User ID
+   * @param authToken - Authentication token
+   * @returns List of private groups
    */
   async getGroups(userId: string, authToken: string): Promise<RcChannel[]> {
     const res = await this.api.get('/groups.list', {
@@ -209,7 +267,12 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Recupere l'historique d'un groupe prive.
+   * Retrieves the message history of a private group.
+   * @param roomId - Group ID
+   * @param userId - User ID
+   * @param authToken - Authentication token
+   * @param count - Maximum number of messages to retrieve
+   * @returns List of messages sorted chronologically
    */
   async getGroupHistory(roomId: string, userId: string, authToken: string, count = 50): Promise<RcMessage[]> {
     const res = await this.api.get('/groups.history', {
@@ -220,7 +283,10 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Recupere la liste de tous les utilisateurs enregistres.
+   * Retrieves the list of all registered users.
+   * @param userId - User ID
+   * @param authToken - Authentication token
+   * @returns List of users with their id, username, and name
    */
   async getUsers(userId: string, authToken: string): Promise<{ _id: string; username: string; name: string }[]> {
     const res = await this.api.get('/users.list', {
@@ -231,7 +297,10 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Récupère les informations de l'utilisateur courant.
+   * Retrieves the current user's profile information.
+   * @param userId - User ID
+   * @param authToken - Authentication token
+   * @returns User profile data
    */
   async me(userId: string, authToken: string): Promise<any> {
     const res = await this.api.get('/me', {
@@ -241,19 +310,27 @@ export class RocketchatService implements OnModuleInit {
   }
 
   /**
-   * Retourne le URL de base de Rocket.Chat pour le websocket client.
+   * Returns the Rocket.Chat WebSocket URL.
+   * @returns URL in `ws(s)://host/websocket` format
    */
   getWebsocketUrl(): string {
     return this.baseUrl.replace(/^http/, 'ws') + '/websocket';
   }
 
   /**
-   * Retourne le URL de base de Rocket.Chat.
+   * Returns the Rocket.Chat base API URL.
+   * @returns Rocket.Chat HTTP URL
    */
   getBaseUrl(): string {
     return this.baseUrl;
   }
 
+  /**
+   * Builds the Rocket.Chat authentication headers.
+   * @param userId - User ID
+   * @param authToken - Authentication token
+   * @returns HTTP headers for the Rocket.Chat API
+   */
   private authHeaders(userId: string, authToken: string) {
     return { 'X-User-Id': userId, 'X-Auth-Token': authToken };
   }

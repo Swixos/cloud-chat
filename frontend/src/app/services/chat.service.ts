@@ -12,7 +12,8 @@ export class ChatService {
   constructor(private http: HttpClient, private auth: AuthService) {}
 
   /**
-   * Recupere la liste des channels publics.
+   * Retrieves the list of public channels.
+   * @returns List of channels
    */
   async getChannels(): Promise<RcChannel[]> {
     return firstValueFrom(
@@ -21,7 +22,10 @@ export class ChatService {
   }
 
   /**
-   * Recupere l'historique des messages d'un channel.
+   * Retrieves the message history of a channel.
+   * @param roomId - Channel ID
+   * @param count - Maximum number of messages
+   * @returns List of messages
    */
   async getMessages(roomId: string, count = 50): Promise<RcMessage[]> {
     return firstValueFrom(
@@ -33,7 +37,9 @@ export class ChatService {
   }
 
   /**
-   * Cree un nouveau channel public.
+   * Creates a new public channel.
+   * @param name - Channel name to create
+   * @returns The created channel
    */
   async createChannel(name: string): Promise<RcChannel> {
     return firstValueFrom(
@@ -42,7 +48,8 @@ export class ChatService {
   }
 
   /**
-   * Recupere les DMs de l'utilisateur.
+   * Retrieves the user's DM conversations.
+   * @returns List of DMs
    */
   async getDirectMessages(): Promise<RcChannel[]> {
     return firstValueFrom(
@@ -51,7 +58,10 @@ export class ChatService {
   }
 
   /**
-   * Recupere l'historique d'un DM.
+   * Retrieves the history of a DM conversation.
+   * @param roomId - DM room ID
+   * @param count - Maximum number of messages
+   * @returns List of messages
    */
   async getDmHistory(roomId: string, count = 50): Promise<RcMessage[]> {
     return firstValueFrom(
@@ -63,7 +73,9 @@ export class ChatService {
   }
 
   /**
-   * Ouvre ou cree un DM avec un utilisateur.
+   * Opens or creates a DM conversation with a user.
+   * @param targetUsername - Recipient username
+   * @returns The DM room ID
    */
   async createDm(targetUsername: string): Promise<{ rid: string }> {
     return firstValueFrom(
@@ -72,7 +84,8 @@ export class ChatService {
   }
 
   /**
-   * Recupere les groupes prives.
+   * Retrieves the user's private groups.
+   * @returns List of groups
    */
   async getGroups(): Promise<RcChannel[]> {
     return firstValueFrom(
@@ -81,7 +94,10 @@ export class ChatService {
   }
 
   /**
-   * Recupere l'historique d'un groupe prive.
+   * Retrieves the message history of a private group.
+   * @param roomId - Group ID
+   * @param count - Maximum number of messages
+   * @returns List of messages
    */
   async getGroupHistory(roomId: string, count = 50): Promise<RcMessage[]> {
     return firstValueFrom(
@@ -93,7 +109,10 @@ export class ChatService {
   }
 
   /**
-   * Cree un groupe prive.
+   * Creates a private group with the specified members.
+   * @param name - Group name
+   * @param members - List of member usernames
+   * @returns The created group
    */
   async createGroup(name: string, members: string[]): Promise<RcChannel> {
     return firstValueFrom(
@@ -102,7 +121,8 @@ export class ChatService {
   }
 
   /**
-   * Recupere la liste de tous les utilisateurs.
+   * Retrieves the list of all registered users.
+   * @returns List of users
    */
   async getUsers(): Promise<{ _id: string; username: string; name: string }[]> {
     return firstValueFrom(
@@ -110,6 +130,10 @@ export class ChatService {
     );
   }
 
+  /**
+   * Builds the authentication headers for the backend API.
+   * @returns HTTP headers with session tokens
+   */
   private headers(): HttpHeaders {
     const session = this.auth.session();
     return new HttpHeaders({

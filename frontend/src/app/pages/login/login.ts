@@ -25,7 +25,8 @@ export class LoginComponent {
   }
 
   /**
-   * Soumet le formulaire de connexion ou d'inscription.
+   * Submits the login or registration form based on the active mode.
+   * @throws Displays the error message on failure
    */
   async onSubmit(): Promise<void> {
     this.error.set('');
@@ -46,7 +47,7 @@ export class LoginComponent {
   }
 
   /**
-   * Bascule entre le mode connexion et inscription.
+   * Toggles between login and registration mode and resets errors.
    */
   toggleMode(): void {
     this.isRegister.update((v) => !v);

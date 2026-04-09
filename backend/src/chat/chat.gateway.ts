@@ -41,7 +41,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   /**
-   * Gère la connexion d'un nouveau client WebSocket.
+   * Handles a new WebSocket client connection.
+   * Validates the token, registers the user, and broadcasts a connection message.
+   * @param client - Connected client socket
    */
   async handleConnection(client: Socket) {
     const authToken = client.handshake.auth?.token as string;
@@ -81,7 +83,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /**
-   * Gère la déconnexion d'un client WebSocket.
+   * Handles a WebSocket client disconnection.
+   * Broadcasts a disconnection message and updates the user list.
+   * @param client - Disconnected client socket
    */
   async handleDisconnect(client: Socket) {
     const user = this.connectedUsers.get(client.id);
@@ -101,7 +105,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /**
-   * Reçoit un message et le route vers le bon destinataire via Rocket.Chat.
+   * Receives a message and persists it via Rocket.Chat, then routes it to the recipient.
+   * @param client - Sender socket
+   * @param data - Message data (target, message, optional roomId)
    */
   @SubscribeMessage('sendMessage')
   async handleMessage(
@@ -145,7 +151,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /**
-   * Gère l'adhésion à un channel spécifique.
+   * Handles a client joining a specific channel.
+   * @param client - Client socket
+   * @param data - Channel ID and name to join
    */
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(
@@ -165,7 +173,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /**
-   * Gère le typing indicator.
+   * Handles a user's typing indicator.
+   * @param client - Client socket
+   * @param data - Target and typing state
    */
   @SubscribeMessage('typing')
   handleTyping(
@@ -183,7 +193,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /**
-   * Notifie des utilisateurs qu'une nouvelle conversation a été créée.
+   * Notifies relevant users that a new conversation has been created.
+   * @param usernames - List of users to notify (empty for channels)
+   * @param type - Type of conversation created
    */
   notifyNewConversation(usernames: string[], type: 'dm' | 'group' | 'channel') {
     if (type === 'channel') {
@@ -196,7 +208,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /**
-   * Envoie la liste des utilisateurs connectés à tous les clients.
+   * Broadcasts the list of connected users to all clients.
    */
   private broadcastUserList() {
     const users = Array.from(this.connectedUsers.values()).map((u) => u.username);

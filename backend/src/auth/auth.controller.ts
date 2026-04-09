@@ -6,28 +6,34 @@ import { LoginDto, RegisterDto } from './auth.dto';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  /**
+   * Authenticates a user with their credentials.
+   * @param dto - Login credentials (username, password)
+   * @returns Session credentials with URLs
+   */
   @Post('login')
   @HttpCode(200)
-  /**
-   * Endpoint de connexion utilisateur.
-   */
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto.username, dto.password);
   }
 
-  @Post('register')
   /**
-   * Endpoint d'enregistrement utilisateur.
+   * Registers a new user.
+   * @param dto - Registration data (username, password, email, name)
+   * @returns Session credentials with URLs
    */
+  @Post('register')
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto.username, dto.password, dto.email, dto.name);
   }
 
+  /**
+   * Logs out the user and invalidates their session.
+   * @param body - Body containing the authentication token
+   * @returns Confirmation object `{ success: true }`
+   */
   @Post('logout')
   @HttpCode(200)
-  /**
-   * Endpoint de déconnexion utilisateur.
-   */
   async logout(@Body() body: { authToken: string }) {
     await this.authService.logout(body.authToken);
     return { success: true };

@@ -7,6 +7,11 @@ export class LinkifyPipe implements PipeTransform {
 
   constructor(private sanitizer: DomSanitizer) {}
 
+  /**
+   * Transforms URLs into clickable links within a text string.
+   * @param value - Plain text potentially containing URLs
+   * @returns Sanitized HTML with URLs converted to `<a>` tags
+   */
   transform(value: string): SafeHtml {
     const escaped = value
       .replace(/&/g, '&amp;')

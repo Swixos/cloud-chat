@@ -8,7 +8,11 @@ export class AuthService {
   constructor(private rocketchatService: RocketchatService) {}
 
   /**
-   * Authentifie un utilisateur via Rocket.Chat et stocke la session.
+   * Authenticates a user via Rocket.Chat and stores the session in memory.
+   * @param username - Rocket.Chat username
+   * @param password - User password
+   * @returns User credentials with WebSocket and Rocket.Chat URLs
+   * @throws {UnauthorizedException} If the credentials are invalid
    */
   async login(username: string, password: string): Promise<RcUser & { wsUrl: string; rcUrl: string }> {
     try {
@@ -25,7 +29,13 @@ export class AuthService {
   }
 
   /**
-   * Enregistre un nouvel utilisateur via Rocket.Chat.
+   * Registers a new user via Rocket.Chat then authenticates them.
+   * @param username - Desired username
+   * @param password - Chosen password
+   * @param email - User email address
+   * @param name - User full name
+   * @returns User credentials with WebSocket and Rocket.Chat URLs
+   * @throws {BadRequestException} If registration fails (duplicate, validation...)
    */
   async register(username: string, password: string, email: string, name: string): Promise<RcUser & { wsUrl: string; rcUrl: string }> {
     try {
@@ -46,7 +56,8 @@ export class AuthService {
   }
 
   /**
-   * Déconnecte l'utilisateur.
+   * Logs out the user and removes their session from the cache.
+   * @param authToken - Authentication token of the session to close
    */
   async logout(authToken: string): Promise<void> {
     const user = this.sessions.get(authToken);
@@ -57,7 +68,10 @@ export class AuthService {
   }
 
   /**
-   * Valide un token en verifiant aupres de Rocket.Chat si necessaire.
+   * Validates an authentication token by checking the local cache then Rocket.Chat.
+   * @param authToken - Authentication token to validate
+   * @param userId - User ID associated with the token
+   * @returns The authenticated user or `null` if the token is invalid
    */
   async validateToken(authToken: string, userId: string): Promise<RcUser | null> {
     const cached = this.sessions.get(authToken);
