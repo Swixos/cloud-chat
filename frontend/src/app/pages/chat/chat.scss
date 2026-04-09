@@ -617,6 +617,14 @@ $radius-xl: 20px;
     line-height: 1.5;
     word-break: break-word;
     color: $text-primary;
+
+    a {
+      color: $accent-light;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+
+      &:hover { color: #fff; }
+    }
   }
 }
 

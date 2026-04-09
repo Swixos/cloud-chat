@@ -224,7 +224,7 @@
                   <span class="msg-sender">{{ msg.sender }}</span>
                   <span class="msg-timestamp">{{ msg.timestamp | date:'HH:mm' }}</span>
                 </div>
-                <p class="msg-text">{{ msg.text }}</p>
+                <p class="msg-text" [innerHTML]="msg.text | linkify"></p>
               </div>
             </div>
           }

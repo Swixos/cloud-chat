@@ -22,6 +22,13 @@ services:
       - OVERWRITE_SETTING_Accounts_Password_Policy_AtLeastOneSpecialCharacter=true
       - OVERWRITE_SETTING_API_Allow_Infinite_Count=true
       - OVERWRITE_SETTING_Accounts_AllowUserRegistration=true
+      - OVERWRITE_SETTING_API_Enable_Rate_Limiter=false
+      - OVERWRITE_SETTING_DDP_Rate_Limit_IP_Enabled=false
+      - OVERWRITE_SETTING_DDP_Rate_Limit_Connection_Enabled=false
+      - OVERWRITE_SETTING_DDP_Rate_Limit_User_Enabled=false
+      - OVERWRITE_SETTING_Rate_Limiter_Limit_RegisterUser=100
+      - OVERWRITE_SETTING_API_Enable_Rate_Limiter_Limit_Calls_Default=200
+      - OVERWRITE_SETTING_API_Enable_Rate_Limiter_Limit_Time_Default=60000
     ports:
       - "3100:3100"
     depends_on:
