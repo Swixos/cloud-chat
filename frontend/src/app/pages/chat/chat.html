@@ -194,7 +194,13 @@
     </div>
 
     <div class="messages-area" #messagesContainer>
-      <div class="messages-scroller">
+      @if (loadingRoom()) {
+        <div class="room-loader">
+          <div class="loader-spinner"></div>
+          <span>Chargement des messages...</span>
+        </div>
+      }
+      <div class="messages-scroller" [class.hidden]="loadingRoom()">
         @for (msg of allMessages(); track msg.id) {
           @if (msg.type === 'system') {
             <div class="system-msg">

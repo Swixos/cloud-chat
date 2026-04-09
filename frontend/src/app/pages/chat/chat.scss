@@ -570,9 +570,38 @@ $transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 .messages-area {
   flex: 1;
   overflow-y: auto;
+  position: relative;
+}
+
+.room-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: $text-muted;
+  font-size: 0.85rem;
+  font-weight: 500;
+  z-index: 5;
+
+  .loader-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(255, 255, 255, 0.06);
+    border-top-color: $accent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .messages-scroller {
+  &.hidden { visibility: hidden; }
   display: flex;
   flex-direction: column;
   min-height: 100%;
