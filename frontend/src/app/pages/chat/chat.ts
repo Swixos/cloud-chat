@@ -16,6 +16,15 @@ export interface UnifiedMessage {
   category?: string;
 }
 
+export type RoomType = 'channel' | 'dm' | 'group';
+
+export interface ActiveRoom {
+  _id: string;
+  name: string;
+  type: RoomType;
+  usernames?: string[];
+}
+
 @Component({
   selector: 'app-chat',
   imports: [FormsModule, DatePipe],
@@ -26,12 +35,22 @@ export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
   channels = signal<RcChannel[]>([]);
-  currentChannel = signal<RcChannel | null>(null);
+  dms = signal<RcChannel[]>([]);
+  groups = signal<RcChannel[]>([]);
+  allUsers = signal<{ _id: string; username: string; name: string }[]>([]);
+
+  activeRoom = signal<ActiveRoom | null>(null);
   private rcMessages = signal<RcMessage[]>([]);
   newMessage = '';
   newChannelName = '';
+  newGroupName = '';
+  selectedGroupMembers = signal<string[]>([]);
+
   showCreateChannel = signal(false);
+  showCreateGroup = signal(false);
+  showNewDm = signal(false);
   showSidebar = signal(true);
+  activeTab = signal<'channels' | 'dms' | 'groups'>('channels');
 
   onlineUsers = computed(() => this.socketService.onlineUsers());
   typingUsers = computed(() =>
@@ -39,6 +58,30 @@ export class ChatComponent implements OnInit, OnDestroy {
       .filter(u => u.isTyping && u.username !== this.auth.session()?.username)
   );
   currentUsername = computed(() => this.auth.session()?.username || '');
+
+  /**
+   * Retourne le nom d'affichage de la room active.
+   */
+  activeRoomDisplay = computed(() => {
+    const room = this.activeRoom();
+    if (!room) return '';
+    if (room.type === 'dm' && room.usernames) {
+      const other = room.usernames.find(u => u !== this.currentUsername());
+      return other || room.name;
+    }
+    return room.name;
+  });
+
+  /**
+   * Retourne le prefixe de la room active.
+   */
+  activeRoomPrefix = computed(() => {
+    const room = this.activeRoom();
+    if (!room) return '';
+    if (room.type === 'channel') return '#';
+    if (room.type === 'group') return '';
+    return '';
+  });
 
   /**
    * Fusionne l'historique RC et les messages WS en une liste unique triee par timestamp.
@@ -70,6 +113,13 @@ export class ChatComponent implements OnInit, OnDestroy {
     );
   });
 
+  /**
+   * Filtre les utilisateurs pour le DM (exclut soi-meme).
+   */
+  availableUsers = computed(() =>
+    this.allUsers().filter(u => u.username !== this.currentUsername())
+  );
+
   private typingTimeout: any;
 
   constructor(
@@ -84,58 +134,146 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Initialise la connexion WebSocket et charge les channels.
+   * Initialise la connexion WebSocket et charge les donnees.
    */
   ngOnInit(): void {
     this.socketService.connect();
-    this.loadChannels();
+    this.loadAll();
   }
 
-  /**
-   * Deconnecte le WebSocket a la destruction du composant.
-   */
   ngOnDestroy(): void {
     this.socketService.disconnect();
   }
 
   /**
-   * Charge la liste des channels depuis Rocket.Chat.
+   * Charge channels, DMs, groupes et utilisateurs.
    */
+  async loadAll(): Promise<void> {
+    await Promise.all([
+      this.loadChannels(),
+      this.loadDms(),
+      this.loadGroups(),
+      this.loadUsers(),
+    ]);
+  }
+
   async loadChannels(): Promise<void> {
     try {
       const channels = await this.chatService.getChannels();
       this.channels.set(channels);
-      if (channels.length > 0 && !this.currentChannel()) {
-        this.selectChannel(channels[0]);
+      if (channels.length > 0 && !this.activeRoom()) {
+        this.selectRoom({ _id: channels[0]._id, name: channels[0].name, type: 'channel' });
       }
     } catch {}
   }
 
-  /**
-   * Selectionne un channel et charge son historique.
-   */
-  async selectChannel(channel: RcChannel): Promise<void> {
-    this.currentChannel.set(channel);
-    this.socketService.clearMessages();
+  async loadDms(): Promise<void> {
+    try {
+      const dms = await this.chatService.getDirectMessages();
+      this.dms.set(dms);
+    } catch {}
+  }
 
-    this.socketService.joinRoom(channel._id, channel.name);
+  async loadGroups(): Promise<void> {
+    try {
+      const groups = await this.chatService.getGroups();
+      this.groups.set(groups);
+    } catch {}
+  }
+
+  async loadUsers(): Promise<void> {
+    try {
+      const users = await this.chatService.getUsers();
+      this.allUsers.set(users);
+    } catch {}
+  }
+
+  /**
+   * Selectionne une room et charge son historique.
+   */
+  async selectRoom(room: ActiveRoom): Promise<void> {
+    this.activeRoom.set(room);
+    this.socketService.clearMessages();
+    this.socketService.joinRoom(room._id, room.name);
 
     try {
-      const messages = await this.chatService.getMessages(channel._id);
+      let messages: RcMessage[];
+      if (room.type === 'dm') {
+        messages = await this.chatService.getDmHistory(room._id);
+      } else if (room.type === 'group') {
+        messages = await this.chatService.getGroupHistory(room._id);
+      } else {
+        messages = await this.chatService.getMessages(room._id);
+      }
       this.rcMessages.set(messages);
-
     } catch {
       this.rcMessages.set([]);
     }
   }
 
   /**
-   * Envoie un message dans le channel courant.
+   * Retourne le nom d'affichage d'un DM (l'autre utilisateur).
+   */
+  dmDisplayName(dm: RcChannel): string {
+    if (dm.usernames) {
+      const other = dm.usernames.find((u: string) => u !== this.currentUsername());
+      if (other) return other;
+    }
+    return dm.name;
+  }
+
+  /**
+   * Ouvre un DM avec un utilisateur.
+   */
+  async openDm(username: string): Promise<void> {
+    try {
+      const result = await this.chatService.createDm(username);
+      this.showNewDm.set(false);
+      await this.loadDms();
+      this.activeTab.set('dms');
+      const dm = this.dms().find(d => d._id === result.rid);
+      if (dm) {
+        this.selectRoom({ _id: dm._id, name: dm.name, type: 'dm', usernames: dm.usernames });
+      } else {
+        this.selectRoom({ _id: result.rid, name: username, type: 'dm', usernames: [this.currentUsername(), username] });
+      }
+    } catch {}
+  }
+
+  /**
+   * Cree un groupe prive.
+   */
+  async createGroup(): Promise<void> {
+    if (!this.newGroupName.trim() || this.selectedGroupMembers().length === 0) return;
+    try {
+      const group = await this.chatService.createGroup(this.newGroupName.trim(), this.selectedGroupMembers());
+      this.newGroupName = '';
+      this.selectedGroupMembers.set([]);
+      this.showCreateGroup.set(false);
+      await this.loadGroups();
+      this.activeTab.set('groups');
+      this.selectRoom({ _id: group._id, name: group.name, type: 'group' });
+    } catch {}
+  }
+
+  /**
+   * Toggle un membre dans la selection pour la creation de groupe.
+   */
+  toggleGroupMember(username: string): void {
+    this.selectedGroupMembers.update(members =>
+      members.includes(username)
+        ? members.filter(m => m !== username)
+        : [...members, username]
+    );
+  }
+
+  /**
+   * Envoie un message dans la room active.
    */
   sendMessage(): void {
-    if (!this.newMessage.trim() || !this.currentChannel()) return;
+    if (!this.newMessage.trim() || !this.activeRoom()) return;
 
-    const channel = this.currentChannel()!;
+    const room = this.activeRoom()!;
     const text = this.newMessage.trim();
 
     this.rcMessages.update(msgs => [...msgs, {
@@ -143,32 +281,24 @@ export class ChatComponent implements OnInit, OnDestroy {
       msg: text,
       u: { _id: this.auth.session()!.userId, username: this.currentUsername() },
       ts: new Date().toISOString(),
-      rid: channel._id,
+      rid: room._id,
     }]);
 
-    this.socketService.sendMessage(channel.name, text, channel._id);
+    this.socketService.sendMessage(room.name, text, room._id);
     this.newMessage = '';
-    this.socketService.sendTyping(channel.name, false);
+    this.socketService.sendTyping(room.name, false);
   }
 
-  /**
-   * Gere l'indicateur de frappe.
-   */
   onTyping(): void {
-    const channel = this.currentChannel();
-    if (!channel) return;
-
-    this.socketService.sendTyping(channel.name, true);
-
+    const room = this.activeRoom();
+    if (!room) return;
+    this.socketService.sendTyping(room.name, true);
     clearTimeout(this.typingTimeout);
     this.typingTimeout = setTimeout(() => {
-      this.socketService.sendTyping(channel.name, false);
+      this.socketService.sendTyping(room.name, false);
     }, 2000);
   }
 
-  /**
-   * Cree un nouveau channel.
-   */
   async createChannel(): Promise<void> {
     if (!this.newChannelName.trim()) return;
     try {
@@ -179,17 +309,11 @@ export class ChatComponent implements OnInit, OnDestroy {
     } catch {}
   }
 
-  /**
-   * Deconnecte l'utilisateur.
-   */
   logout(): void {
     this.socketService.disconnect();
     this.auth.logout();
   }
 
-  /**
-   * Detecte la touche Entree pour envoyer un message.
-   */
   onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
