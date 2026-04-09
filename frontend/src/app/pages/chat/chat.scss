@@ -279,8 +279,8 @@ $radius-xl: 20px;
   }
 
   .nav-icon-svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     color: $text-muted;
     flex-shrink: 0;
   }
@@ -495,17 +495,22 @@ $radius-xl: 20px;
     }
   }
 
-  .topbar-info h2 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: $text-primary;
-    letter-spacing: -0.2px;
+  .topbar-info {
+    display: flex;
+    align-items: center;
 
-    .hash {
-      color: $text-muted;
-      margin-right: 2px;
-      font-weight: 700;
+    h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: $text-primary;
+      letter-spacing: -0.2px;
+
+      .hash {
+        color: $text-muted;
+        margin-right: 2px;
+        font-weight: 700;
+      }
     }
   }
 
@@ -524,7 +529,7 @@ $radius-xl: 20px;
     padding: 5px 10px;
     border-radius: 8px;
 
-    svg { width: 15px; height: 15px; }
+    svg { width: 14px; height: 14px; }
   }
 }
 
