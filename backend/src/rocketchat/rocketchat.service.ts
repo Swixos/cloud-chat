@@ -188,8 +188,9 @@ export class RocketchatService implements OnModuleInit {
    * Cree un groupe prive dans Rocket.Chat.
    */
   async createGroup(name: string, members: string[], userId: string, authToken: string): Promise<RcChannel> {
+    const sanitizedName = name.trim().replace(/\s+/g, '-').toLowerCase();
     const res = await this.api.post('/groups.create', {
-      name,
+      name: sanitizedName,
       members,
     }, {
       headers: this.authHeaders(userId, authToken),

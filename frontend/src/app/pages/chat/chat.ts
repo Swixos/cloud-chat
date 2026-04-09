@@ -53,10 +53,11 @@ export class ChatComponent implements OnInit, OnDestroy {
   activeTab = signal<'channels' | 'dms' | 'groups'>('channels');
 
   onlineUsers = computed(() => this.socketService.onlineUsers());
-  typingUsers = computed(() =>
-    this.socketService.typingUsers()
-      .filter(u => u.isTyping && u.username !== this.auth.session()?.username)
-  );
+  typingUsers = computed(() => {
+    const room = this.activeRoom();
+    return this.socketService.typingUsers()
+      .filter(u => u.isTyping && u.username !== this.auth.session()?.username && u.target === room?.name);
+  });
   currentUsername = computed(() => this.auth.session()?.username || '');
 
   /**
@@ -98,15 +99,21 @@ export class ChatComponent implements OnInit, OnDestroy {
       own: m.u.username === username,
     }));
 
-    const fromWs: UnifiedMessage[] = this.socketService.messages().map((m, i) => ({
-      id: `ws-${i}-${m.TIMESTAMP}`,
-      type: (m.CATEGORY === 'OPEN' || m.CATEGORY === 'CLOSE') ? 'system' as const : 'user' as const,
-      sender: m.SOURCE,
-      text: m.PAYLOAD,
-      timestamp: m.TIMESTAMP,
-      own: m.SOURCE === username,
-      category: m.CATEGORY,
-    }));
+    const room = this.activeRoom();
+    const fromWs: UnifiedMessage[] = this.socketService.messages()
+      .filter(m => {
+        if (m.CATEGORY === 'OPEN' || m.CATEGORY === 'CLOSE') return m.TARGET === 'COMMON';
+        return m.TARGET === room?.name;
+      })
+      .map((m, i) => ({
+        id: `ws-${i}-${m.TIMESTAMP}`,
+        type: (m.CATEGORY === 'OPEN' || m.CATEGORY === 'CLOSE') ? 'system' as const : 'user' as const,
+        sender: m.SOURCE,
+        text: m.PAYLOAD,
+        timestamp: m.TIMESTAMP,
+        own: m.SOURCE === username,
+        category: m.CATEGORY,
+      }));
 
     return [...fromRc, ...fromWs].sort((a, b) =>
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
@@ -130,6 +137,14 @@ export class ChatComponent implements OnInit, OnDestroy {
     effect(() => {
       this.allMessages();
       setTimeout(() => this.scrollToBottom(), 0);
+    });
+
+    effect(() => {
+      const event = this.socketService.newConversation();
+      if (!event) return;
+      if (event.type === 'dm') this.loadDms();
+      if (event.type === 'group') this.loadGroups();
+      this.socketService.newConversation.set(null);
     });
   }
 

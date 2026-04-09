@@ -13,7 +13,7 @@
       <h1>Cloud Chat</h1>
     </div>
 
-    <p class="login-subtitle">{{ isRegister() ? 'Creer un compte' : 'Content de vous revoir' }}</p>
+    <p class="login-subtitle">{{ isRegister() ? 'Créer un compte' : 'Content de vous revoir' }}</p>
 
     @if (error()) {
       <div class="error-box">
@@ -69,7 +69,7 @@
     <div class="login-switch">
       <span class="divider-line"></span>
       <button type="button" (click)="toggleMode()">
-        {{ isRegister() ? 'Deja un compte ? Se connecter' : "Pas de compte ? S'inscrire" }}
+        {{ isRegister() ? 'Déjà un compte ? Se connecter' : "Pas de compte ? S'inscrire" }}
       </button>
       <span class="divider-line"></span>
     </div>
