@@ -47,7 +47,9 @@ export class ChatController {
     @Headers('x-user-id') userId: string,
   ) {
     this.validateHeaders(authToken, userId);
-    return this.rocketchatService.createChannel(body.name, userId, authToken);
+    const channel = await this.rocketchatService.createChannel(body.name, userId, authToken);
+    this.chatGateway.notifyNewConversation([], 'channel');
+    return channel;
   }
 
   /**

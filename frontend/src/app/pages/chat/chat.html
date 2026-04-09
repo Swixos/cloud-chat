@@ -52,6 +52,9 @@
                 <span class="channel-name">{{ channel.name }}</span>
               </li>
             }
+            @if (channels().length === 0 && !showCreateChannel()) {
+              <li class="empty-state">Aucun channel</li>
+            }
           </ul>
         </div>
       }
@@ -194,13 +197,19 @@
     </div>
 
     <div class="messages-area" #messagesContainer>
-      @if (loadingRoom()) {
+      @if (!activeRoom()) {
+        <div class="no-room-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <h3>Bienvenue sur Cloud Chat</h3>
+          <p>Sélectionnez une conversation dans la barre latérale pour commencer à discuter.</p>
+        </div>
+      } @else if (loadingRoom()) {
         <div class="room-loader">
           <div class="loader-spinner"></div>
           <span>Chargement des messages...</span>
         </div>
       }
-      <div class="messages-scroller" [class.hidden]="loadingRoom()">
+      <div class="messages-scroller" [class.hidden]="loadingRoom() || !activeRoom()">
         @for (msg of allMessages(); track msg.id) {
           @if (msg.type === 'date-separator') {
             <div class="date-separator">
@@ -244,16 +253,23 @@
       </div>
     }
 
-    <div class="chat-input-wrapper">
-      <div class="chat-input-box">
+    <div class="chat-input-wrapper" [class.disabled]="!activeRoom()">
+      <div class="chat-input-box" [class.over-limit]="newMessage.length > maxMessageLength">
         <textarea
           [(ngModel)]="newMessage"
           (input)="onTyping()"
           (keydown)="onKeydown($event)"
-          placeholder="Envoyer un message dans {{ activeRoomPrefix() }}{{ activeRoomDisplay() || 'général' }}"
+          [placeholder]="activeRoom() ? 'Envoyer un message dans ' + activeRoomPrefix() + (activeRoomDisplay() || 'général') : 'Sélectionnez une conversation...'"
           rows="1"
+          [maxlength]="maxMessageLength"
+          [disabled]="!activeRoom()"
         ></textarea>
-        <button class="send-btn" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+        @if (newMessage.length > maxMessageLength * 0.8) {
+          <span class="char-counter" [class.warn]="newMessage.length > maxMessageLength * 0.9" [class.error]="newMessage.length >= maxMessageLength">
+            {{ newMessage.length }}/{{ maxMessageLength }}
+          </span>
+        }
+        <button class="send-btn" (click)="sendMessage()" [disabled]="!newMessage.trim() || newMessage.length > maxMessageLength">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>

@@ -11,7 +11,7 @@ export class SocketService {
   messages = signal<ChatMessage[]>([]);
   onlineUsers = signal<string[]>([]);
   typingUsers = signal<{ username: string; isTyping: boolean; target: string }[]>([]);
-  newConversation = signal<{ type: 'dm' | 'group' } | null>(null);
+  newConversation = signal<{ type: 'dm' | 'group' | 'channel' } | null>(null);
 
   constructor(private auth: AuthService) {}
 
@@ -42,7 +42,7 @@ export class SocketService {
       });
     });
 
-    this.socket.on('newConversation', (data: { type: 'dm' | 'group' }) => {
+    this.socket.on('newConversation', (data: { type: 'dm' | 'group' | 'channel' }) => {
       this.newConversation.set(data);
     });
 

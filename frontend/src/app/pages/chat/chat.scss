@@ -576,6 +576,40 @@ $transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
+.no-room-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  text-align: center;
+
+  svg {
+    width: 56px;
+    height: 56px;
+    color: $text-muted;
+    opacity: 0.3;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: $text-primary;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: $text-muted;
+    max-width: 320px;
+    line-height: 1.5;
+  }
+}
+
 .room-loader {
   position: absolute;
   inset: 0;
@@ -789,6 +823,11 @@ $transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 // ─── INPUT ────────────────────────────────────────────────
 .chat-input-wrapper {
   padding: 0 16px 20px;
+
+  &.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
 }
 
 .chat-input-box {
@@ -821,6 +860,22 @@ $transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     &::placeholder { color: $text-muted; }
     &:focus { outline: none; }
+  }
+
+  &.over-limit {
+    border-color: rgba($red, 0.3);
+  }
+
+  .char-counter {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: $text-muted;
+    white-space: nowrap;
+    align-self: center;
+    transition: color $transition-fast;
+
+    &.warn { color: #f59e0b; }
+    &.error { color: $red; }
   }
 
   .send-btn {
