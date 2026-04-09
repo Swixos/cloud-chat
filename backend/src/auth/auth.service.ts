@@ -57,9 +57,19 @@ export class AuthService {
   }
 
   /**
-   * Valide un token et retourne la session associée.
+   * Valide un token en verifiant aupres de Rocket.Chat si necessaire.
    */
-  validateToken(authToken: string): RcUser | null {
-    return this.sessions.get(authToken) || null;
+  async validateToken(authToken: string, userId: string): Promise<RcUser | null> {
+    const cached = this.sessions.get(authToken);
+    if (cached) return cached;
+
+    try {
+      const me = await this.rocketchatService.me(userId, authToken);
+      const user: RcUser = { userId, authToken, username: me.username };
+      this.sessions.set(authToken, user);
+      return user;
+    } catch {
+      return null;
+    }
   }
 }

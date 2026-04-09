@@ -52,7 +52,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const session = this.authService.validateToken(authToken);
+    const session = await this.authService.validateToken(authToken, userId);
     if (!session) {
       client.disconnect();
       return;
