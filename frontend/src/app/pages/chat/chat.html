@@ -202,7 +202,13 @@
       }
       <div class="messages-scroller" [class.hidden]="loadingRoom()">
         @for (msg of allMessages(); track msg.id) {
-          @if (msg.type === 'system') {
+          @if (msg.type === 'date-separator') {
+            <div class="date-separator">
+              <div class="date-line"></div>
+              <span class="date-label">{{ msg.text }}</span>
+              <div class="date-line"></div>
+            </div>
+          } @else if (msg.type === 'system') {
             <div class="system-msg">
               <div class="system-line"></div>
               <span class="system-content">
