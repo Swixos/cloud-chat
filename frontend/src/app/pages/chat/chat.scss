@@ -619,11 +619,15 @@ $radius-xl: 20px;
     color: $text-primary;
 
     a {
-      color: #5eb5ff;
-      text-decoration: underline;
-      text-underline-offset: 2px;
+      color: inherit;
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.84rem;
+      transition: background 0.15s;
 
-      &:hover { color: #8fcfff; }
+      &:hover { background: rgba(255, 255, 255, 0.15); }
     }
   }
 }
